@@ -37,11 +37,12 @@ export const activateStation = stationId => (dispatch, getState) => {
 export const checkCurrentUnFinishTask = stationId => dispatch =>
   // eslint-disable-next-line implicit-arrow-linebreak
   api.station.checkCurrentUnFinishTask(stationId).then((res) => {
+    const tasks = res.data;
     const stationInfo = {
       taskType: 'U',
       taskCount: 0,
     };
-    res.forEach((element) => {
+    tasks.forEach((element) => {
       if (element.cnt > 0) {
         stationInfo.taskType = element.taskType;
         stationInfo.taskCount = element.cnt;

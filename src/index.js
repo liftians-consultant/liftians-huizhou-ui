@@ -30,22 +30,7 @@ if (localStorage.liftiansJWT) {
     setAuthorizationHeader();
   } else {
     // development env
-    // check if expired
-    const payload = decode(localStorage.liftiansJWT); // {sub: "10001", exp: 1519504053}
-    const nowDate = new Date();
-    const tokenDate = new Date(payload.exp);
-    if (nowDate.getTime() < tokenDate.getTime()) {
-      localStorage.removeItem('liftiansJWT');
-      setAuthorizationHeader();
-      store.dispatch(userLoggedOut());
-    } else {
-      const user = {
-        token: localStorage.liftiansJWT,
-        username: payload.sub,
-      };
-      setAuthorizationHeader(localStorage.liftiansJWT);
-      store.dispatch(userLoggedIn(user));
-    }
+    store.dispatch(userLoggedIn('user'));
   }
 }
 

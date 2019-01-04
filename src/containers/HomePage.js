@@ -28,10 +28,10 @@ class HomePage extends Component {
   }
 
   componentWillMount() {
-    this.props.getUserInfoById(this.props.username).then(() => {
-      this.props.activateStation(this.props.stationId, this.props.username);
-      this.checkCurrentUnFinishTaskCall();
-    });
+    // this.props.getUserInfoById(this.props.username).then(() => {
+    // this.props.activateStation(this.props.stationId, this.props.username);
+    this.checkCurrentUnFinishTaskCall();
+    // });
 
     ETagService.turnEndLightOffById(0);
 

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import appConfig from 'services/AppConfig';
 import * as apiKey from 'apiKey.json';
+import { parseJSON } from 'utils/utils';
 
 const uuidv4 = require('uuid/v4');
 
@@ -25,7 +26,7 @@ function wmsRequest(messageType, data) {
     messageType,
     data,
     msgId: uuidv4(),
-    token: appConfig.getToken(),
+    token: localStorage.liftiansJWT,
   });
 }
 
@@ -34,7 +35,7 @@ const user = {
   //   .then(res => res.headers.authorization),
 
   login: credentials => loginRequest(credentials)
-    .then(res => res.data.liftians),
+    .then(res => parseJSON(res)),
 
   logout: () => axios.post(`${appConfig.getApiUrl()}/logout`).then(res => res),
 
@@ -67,10 +68,8 @@ const station = {
     parameter: [String(stationId), empId],
   }).then(res => res.data),
 
-  checkCurrentUnFinishTask: stationId => axios.post(`${appConfig.getApiUrl()}/Setup`, {
-    name: 'CheckCurrentUnFinishTask',
-    parameter: [stationId],
-  }).then(res => res.data),
+  checkCurrentUnFinishTask: stationId => wmsRequest('CURRENT_UNFINISH_TASK', stationId)
+    .then(res => parseJSON(res)),
 
   atStationPodLayoutInfo: stationId => axios.post(`${appConfig.getApiUrl()}/Common`, {
     name: 'AtStationPodLayoutInfo',

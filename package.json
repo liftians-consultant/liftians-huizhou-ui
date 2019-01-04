@@ -10,7 +10,6 @@
     "electron-is-dev": "^1.0.1",
     "electron-prompt": "^1.2.0",
     "electron-renderer-react-scripts-target": "^1.1.1",
-    "eslint": "^5.11.1",
     "history": "^4.7.2",
     "http-proxy-middleware": "^0.19.1",
     "husky": "^1.2.0",
