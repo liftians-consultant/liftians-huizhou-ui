@@ -1,0 +1,24 @@
+.replenish-task-page-container {
+  padding-left: 2rem;
+  padding-top: 5%;
+
+  .orderlist-table-container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 5px;
+    border-radius: 5px;
+  
+    .replenish-task-table {
+      height: 400px;
+    }
+  }
+  
+  .order-list-btn-group {
+    padding-top: 0.5rem;
+    float: right;
+  }
+  
+  .search-input-group {
+    float: left;
+  }
+}
+

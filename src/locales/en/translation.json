@@ -1,0 +1,18 @@
+{
+  "//": "Home Page",
+  "title.replenish": "Replenish",
+  "title.pick": "Pick",
+  "title.inventoryCheck": "Inventory Check",
+  "title.systemSetting": "System Setting",
+  "title.inventorySearch": "Inventory Search",
+  "title.generateData": "Generate Data",
+  "//": "Side Navigation",
+  "station.name": "Station #{{id}}",
+  "label.mainMenu": "Main Menu",
+  "label.operation": "Operation",
+  "message.finishAllTask": "Please finish all the tasks first! \nPlease go to menu to refresh if you think you finished all tasks",
+  "//": "Pick Task Page",
+  "label.start": "Start",
+  "label.pause": "Pause",
+  "label.print": "Print"
+}

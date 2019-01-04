@@ -1,0 +1,16 @@
+.task-list-page-container {
+  padding-left: 2rem;
+  padding-top: 5%;
+
+  .page-header span {
+    font-size: 2rem;
+    color: #fff;
+  }
+
+  .task-list-table-container {
+    display: block;
+    margin: 10px 0;
+    height: 80vh;
+    overflow-y: scroll;
+  }
+}

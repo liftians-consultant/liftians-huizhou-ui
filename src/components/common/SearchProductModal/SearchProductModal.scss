@@ -1,0 +1,12 @@
+#search-product-modal {
+  .selected {
+    background: #4A7AFE;
+    color: #fff;
+
+    &:hover {
+      background: #4A7AFE !important;
+      opacity: 0.8 !important;
+      color: #fff !important;
+    }
+  }
+}

@@ -1,0 +1,54 @@
+$bin-height: 120px;
+
+.pick-bins-container {
+  margin-top: 40px;
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  // height: $bin-height;
+  position: relative;
+}
+
+.bin-item-container {
+  padding: 10px;
+  // height: $bin-height;
+  // width: $bin-height;
+}
+
+.bin-item {
+  height: 100%;
+  width: 100%;
+  background: #fff;
+  // line-height: $bin-height - 20;
+  text-align: center;
+  font-size: 3rem;
+  border: 1px black solid;
+  cursor: pointer;
+}
+
+.highlight {
+  // background: red;
+  // animation: blinker linear 3s infinite;
+}
+
+@keyframes flash {
+  0% { opacity: 1; } 
+	50% { opacity: .1; } 
+	100% { opacity: 1; }
+}
+
+@keyframes blinker {
+  0% {
+    background: red;
+  }
+
+  50% {
+    background: #fff;
+  }
+
+  100% {
+    background: red;
+  }
+}
+

@@ -1,0 +1,49 @@
+@import '../../../sass/shelfColor.scss';
+
+.shelf-row {
+  display: inline-block;
+  width: 100%;
+}
+
+.shelf-object {
+  // width: 100%;
+  height: 90px;
+  background: #111;
+  margin: auto;
+  display: inline-block;
+  border: 2px solid #fff;
+  padding: 2%;
+  line-height: 90px;
+}
+
+.shelf-row-disabled {
+  background: #DDD;
+}
+.shelf-row-1 {
+  background-color: $shelf-color-1;
+}
+
+.shelf-row-2 {
+  background-color: $shelf-color-2;
+}
+
+.shelf-row-3 {
+  background-color: $shelf-color-3;
+}
+
+.shelf-row-4 {
+  background-color: $shelf-color-4;
+}
+
+.shelf-row-5 {
+  background-color: $shelf-color-5;
+}
+
+.selected-box {
+  width: 100%;
+  height: 85%;
+  background: #fff;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}

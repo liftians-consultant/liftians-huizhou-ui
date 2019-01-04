@@ -1,0 +1,62 @@
+.pick-operation-page {
+  padding: 7% 4% 0;
+
+  .ok-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+  }
+
+  .numpad-container {
+    position: absolute;
+    bottom: 0;
+    right: 35%;
+  }
+  
+  .pod-info-block {
+    span {
+      color: #FFF;
+      font-size: 1.5rem;
+      white-space: nowrap;
+    }
+  }
+
+  h4 {
+    color: #fff;
+  }
+
+  .action-group-container {
+    margin-top: 50px;
+    height: 116px;
+
+    .scan-input-group, .action-btn-group {
+      width: 270px;
+      display: inline-block;
+    }
+
+    .scan-input-holder {
+      // opacity: 0;
+      // width: 0;
+      margin: 10px;
+
+      .ui.input {
+        width: 250px;
+        // width: 0;
+      }
+    }
+
+    .action-btn-group {
+      vertical-align: bottom;
+    }
+  }
+}
+
+@media(max-width: 1300px) {
+
+  .pick-operation-page {
+    padding: 5% 2% 0;
+  }
+  .pick-operation-page .action-group-container {
+    margin-top: 10px;
+  }
+}

@@ -1,0 +1,13 @@
+.change-bin-modal-container {
+  .bin-item {
+    background: lightblue;
+    
+    &.highlight {
+      background: blue;
+    }
+
+    &:hover {
+      background: blue;
+    }
+  }
+}

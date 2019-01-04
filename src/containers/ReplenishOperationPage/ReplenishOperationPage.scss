@@ -1,0 +1,62 @@
+.replenish-operation-page {
+  padding: 100px 5% 0;
+
+
+  .pod-info-block {
+    span {
+      color: #FFF;
+      font-size: 2rem;
+      white-space: nowrap;
+    }
+  }
+
+  .numpad-container {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+  }
+
+  .product-image {
+    min-height: 300px;
+    min-width: 300px;
+  }
+
+  .action-group-container {
+    margin-top: 50px;
+    height: 116px;
+
+    .scan-input-group, .action-btn-group {
+      width: 270px;
+      display: inline-block;
+    }
+
+    .scan-input-holder {
+      // opacity: 0;
+      // width: 0;
+      margin: 10px;
+
+      .ui.input {
+        width: 250px;
+        // width: 0;
+      }
+    }
+
+    .action-btn-group {
+      vertical-align: bottom;
+
+      button {
+        height: 116px;
+      }
+    }
+  }
+}
+
+@media(max-width: 1300px) {
+
+  .replenish-operation-page {
+    padding: 5% 5% 0;
+  }
+  .replenish-operation-page .action-group-container {
+    margin-top: 10px;
+  }
+}

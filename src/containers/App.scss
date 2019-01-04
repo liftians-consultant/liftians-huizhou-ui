@@ -1,0 +1,15 @@
+.app-comp-container > .grid {
+  height: 100%;
+  margin: 0;
+
+  & > .row {
+    padding-bottom: 0;
+    padding-top: 0;
+  }
+}
+
+.navGridColumn {
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}

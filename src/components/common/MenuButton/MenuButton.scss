@@ -1,0 +1,51 @@
+.menuBtn {
+  width: 180px;
+  height: 150px;
+  background-color: rgb(84, 84, 99);
+  text-align: center;
+  // line-height: 150px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 5px;
+  border: 3px solid orange;
+  cursor: pointer;
+  opacity: 1;
+  padding: 10px;
+
+  &.btn-disabled {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  &:hover {
+    background-color: orange;
+
+    .menuBtn-span {
+      color: white;
+    }
+  }
+
+  &:active {
+    background-color: darkorange;
+  }
+
+  .menuBtn-icon {
+    margin: 9px 0;
+    font-weight: 100;
+  }
+
+  .menuBtn-span {
+    font-size: 20px;
+    font-weight: 300;
+    color: #fff;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
+  }
+
+  .withoutIcon {
+    line-height: 124px;
+  }
+}

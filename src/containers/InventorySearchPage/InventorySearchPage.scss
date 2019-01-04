@@ -1,0 +1,19 @@
+.inventory-search-page {
+  padding: 50px 5% 0;
+
+  .submit-btn button {
+    height: 100%;
+  }
+
+  .search-result-table-container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 5px;
+    border-radius: 5px;
+
+    .search-result-table {
+      height: 500px;
+    }
+  }
+
+
+}

@@ -1,0 +1,18 @@
+{
+  "//": "Home Page",
+  "title.replenish": "入库",
+  "title.pick": "出库",
+  "title.inventoryCheck": "盘点",
+  "title.systemSetting": "设定",
+  "title.inventorySearch": "库存查询",
+  "title.generateData": "资料生产",
+  "//": "Side Navigation",
+  "station.name": "Station #{{id}}",
+  "label.mainMenu": "主菜单",
+  "label.operation": "操作介面",
+  "message.finishAllTask": "Please finish all the tasks first! \nPlease go to menu to refresh if you think you finished all tasks",
+  "//": "Pick Task Page",
+  "label.start": "开始",
+  "label.pause": "暂停",
+  "label.print": "列印"
+}

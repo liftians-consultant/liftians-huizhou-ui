@@ -1,0 +1,51 @@
+.numpad-container {
+  background: #fff;
+  padding: 10px;
+  border-radius: 5px;
+  // width: 300px;
+
+  button {
+    width: 100px;
+    height: 80px;
+    font-size: 3em;
+
+    &.other-btn {
+      width: 100%;
+    }
+  }
+
+  .num-group {
+    margin: 10px 0;
+  }
+
+  .total-label {
+    text-align: center;
+    height: 1.4em;
+    line-height: 1.3em;
+    font-size: 1.3em;
+  }
+
+  &.show-more {
+    button:hover {
+      background: #1678c2;
+      color: #fff;
+    }
+  }
+}
+
+
+
+
+
+
+
+@media (max-width: 1400px) {
+  .numpad-container {
+    button {
+      width: 80px;
+      height: 60px;
+
+      font-size: 2em;
+    }
+  }
+}
