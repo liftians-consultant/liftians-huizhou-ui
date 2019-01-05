@@ -1,22 +1,20 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
-import OrderDetailTable from 'components/common/OrderDetailTable/OrderDetailTable';
 import 'react-table/react-table.css';
 
 
-const OrderListTable = ({ columns, listData, loading }) => (
+const OrderListTable = ({ columns, listData, loading, onFetchData, pages }) => (
   <ReactTable
     columns={columns}
     data={listData}
-    defaultPageSize={12}
-    SubComponent={row => <OrderDetailTable taskType="P" recordId={row.original.order_No} />}
+    // pages={pages}
+    defaultPageSize={10}
     loading={loading}
+    // onFetchData={onFetchData}
     manual
     resizable={false}
     filterable={false}
-    showPageJump={false}
-    showPagination={false}
     className="-striped -highlight orderlist-table"
   />
 );
@@ -29,6 +27,8 @@ OrderListTable.propTypes = {
   listData: PropTypes.array.isRequired,
   loading: PropTypes.bool,
   columns: PropTypes.array.isRequired,
+  onFetchData: PropTypes.func.isRequired,
+  pages: PropTypes.number.isRequired,
 };
 
 export default OrderListTable;

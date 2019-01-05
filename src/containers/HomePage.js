@@ -33,7 +33,7 @@ class HomePage extends Component {
     this.checkCurrentUnFinishTaskCall();
     // });
 
-    ETagService.turnEndLightOffById(0);
+    // ETagService.turnEndLightOffById(0);
 
     if (!logSetFlag) {
       log4js.addAppender(AjaxAppenderProvider({

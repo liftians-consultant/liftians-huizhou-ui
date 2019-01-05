@@ -1,25 +1,21 @@
 const PickOrderTableColumns = [
   {
-    Header: 'Order No.',
-    accessor: 'order_No',
+    Header: 'Barcode',
+    accessor: 'barCode',
   }, {
-    Header: 'Customer',
-    accessor: 'rec_DEPT_NAME',
+    Header: 'Product',
+    accessor: 'productId',
   }, {
-    Header: '# of Product',
-    accessor: 'totalDistinctProduct',
+    Header: 'Quantity',
+    accessor: 'quantity',
     maxWidth: 100,
   }, {
-    Header: 'Qty',
-    accessor: 'totalOrder_Qty',
-    maxWidth: 100,
-  }, {
-    Header: 'Order Date',
-    accessor: 'pick_DATE',
-    minWidth: 130,
+    Header: 'UserId',
+    accessor: 'userId',
   }, {
     Header: 'Status',
-    accessor: 'processStatus',
+    accessor: 'statusName',
+    maxWidth: 100,
   },
 ];
 

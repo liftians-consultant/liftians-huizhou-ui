@@ -1,7 +1,7 @@
 import axios from 'axios';
 import appConfig from 'services/AppConfig';
 import * as apiKey from 'apiKey.json';
-import { parseJSON } from 'utils/utils';
+import { parseJSON, parseResult } from 'utils/utils';
 
 const uuidv4 = require('uuid/v4');
 
@@ -45,16 +45,9 @@ const user = {
   }).then(res => res.data),
 };
 
-const menu = {
-  getBillTypeName: operationType => axios.post(`${appConfig.getApiUrl()}/Common`, {
-    name: 'BillType',
-    parameter: [operationType],
-  }),
-
-  getProcessStatusName: operationType => axios.post(`${appConfig.getApiUrl()}/Common`, {
-    name: 'ProcessStatus',
-    parameter: [operationType],
-  }),
+const status = {
+  getTaskStatus: () => wmsRequest('STAT_TYPE', 'TaskStat')
+    .then(res => parseResult(res)),
 };
 
 const station = {
@@ -133,19 +126,40 @@ const pick = {
     parameter: [stationId],
   }),
 
-  retrievePickOrderReocrdsByTypeAndState: (stationId, billTypeId, processId) => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'DisplayPickMenu',
-    parameter: [
-      stationId,
-      String(billTypeId),
-      String(processId),
-    ],
+  // retrieveOrderFromAsm: (barCode) => wmsRequest('GET_ORDER_LABEL', barCode)
+  //   .then(res => parseJSON(res)),
+
+  retrieveOrderFromAsm: barCode => Promise.resolve({
+    success: true,
+    data: {
+      stat: 0,
+      quantity: 1.00456,
+      productId: 4,
+      productBarCode: 'D8V203AC2B',
+      batch: '005',
+      updateTime: 1546528763387,
+      warehouse: 'H180',
+      barCode: '86566337',
+      manufacturer: 2,
+      unit: 'GM',
+      areaId: 0,
+      createTime: 1546528763387,
+      plant: 'HT001',
+      id: 0,
+      locationCode: '1000023061',
+    },
   }),
 
-  retrievePickOrderItems: orderId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'DisplayPickOrderDetail',
-    parameter: [orderId],
-  }),
+  getStationOrderList: (stationId, pageNum, pageSize) => wmsRequest('GET_STATION_ORDER_LIST', {
+    stationId,
+    pageNum,
+    pageSize,
+  }).then(res => parseResult(res)),
+
+  // retrievePickOrderItems: orderId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
+  //   name: 'DisplayPickOrderDetail',
+  //   parameter: [orderId],
+  // }),
 
   callServerGeneratePickTask: stationId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
     name: 'GenPickTask',
@@ -438,7 +452,7 @@ const account = {
 
 export default {
   user,
-  menu,
+  status,
   station,
   pick,
   replenish,
