@@ -4,13 +4,15 @@ import { connect } from 'react-redux';
 import moment from 'moment';
 import { compose } from 'recompose';
 import { withNamespaces } from 'react-i18next';
-import { Grid, Button, Input } from 'semantic-ui-react';
+import { Grid, Button, Input, Icon } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
 
 import api from 'api';
 import OrderListTable from 'components/common/OrderListTable/OrderListTable';
 import PickOrderTableColumns from 'models/PickOrderTableModel';
 import OperationTaskMenu from 'components/OperationTaskMenu/OperationTaskMenu';
+import InputDialogModal from 'components/common/InputDialogModal';
+import ConfirmDialogModal from 'components/common/ConfirmDialogModal/ConfirmDialogModal';
 
 import { setStationTaskType, checkCurrentUnFinishTask } from 'redux/actions/stationAction';
 import { getTaskStatus } from 'redux/actions/statusAction';
@@ -25,6 +27,8 @@ class PickTaskPage extends Component {
 
   pageSize = 10;
 
+  deleteIndex = 0;
+
   taskTypeOption = [
     { key: 1, text: 'New', index: 1, value: '0' },
     { key: 2, text: 'In Progress', index: 2, value: '1' },
@@ -38,7 +42,33 @@ class PickTaskPage extends Component {
     inputLoading: false,
     tableLoading: false,
     pages: 1,
+    openBinScanModal: false,
+    binBarcode: '',
+    openRemoveConfirm: false,
+    binScanErrorMessage: '',
   }
+
+  NewOrderTableColumn = [
+    {
+      Header: 'Barcode',
+      accessor: 'barCode',
+    }, {
+      Header: 'Product',
+      accessor: 'productId',
+    }, {
+      Header: 'Quantity',
+      accessor: 'quantity',
+      maxWidth: 100,
+    }, {
+      Header: 'Bin Barcode',
+      accessor: 'binBarCode',
+    }, {
+      Header: 'Remove',
+      Cell: row => (
+        <Icon name="delete" size="big" onClick={() => this.handleRemoveOrder(row.index)} />
+      ),
+    },
+  ];
 
   constructor() {
     super();
@@ -48,15 +78,20 @@ class PickTaskPage extends Component {
     this.handleFetchTableData = this.handleFetchTableData.bind(this);
     this.backBtnHandler = this.backBtnHandler.bind(this);
     this.handleStartBtn = this.handleStartBtn.bind(this);
+    this.handleRemoveConfirmAction = this.handleRemoveConfirmAction.bind(this);
   }
 
   componentWillMount() {
     this.props.getTaskStatus();
-    // this.setStationTaskType();
-    // this.startStationOperationCall();
+    this.setStationTaskType();
+    this.startStationOperationCall();
   }
 
   componentDidMount() {
+    this.focusInput();
+  }
+
+  focusInput() {
     this.scanRef.current.focus();
   }
 
@@ -73,14 +108,28 @@ class PickTaskPage extends Component {
     });
   }
 
+  preProcessInputValue(value) {
+    if (value === 'START') {
+      this.handleStartBtn();
+      return true;
+    }
+
+    return false;
+  }
+
   handleFetchTableData(state) {
     this.getStationUnfinsihedOrderList(state.page);
   }
 
   handleInputChange(e) {
     if (e.key === 'Enter' && e.target.value) {
-      this.setState({ inputLoading: true });
       e.persist();
+
+      if (this.preProcessInputValue(e.target.value)) {
+        return;
+      }
+
+      this.setState({ inputLoading: true });
 
       api.pick.retrieveOrderFromAsm(e.target.value).then((res) => {
         if (res.success) {
@@ -93,7 +142,7 @@ class PickTaskPage extends Component {
           } else {
             newOrdersList.push(record);
             this.setState({ newOrdersList: [...newOrdersList] }, () => {
-              this.setState({ ordersList: [...newOrdersList] });
+              this.setState({ ordersList: [...newOrdersList], openBinScanModal: true });
             });
           }
 
@@ -130,19 +179,31 @@ class PickTaskPage extends Component {
   }
 
   startStationOperationCall() {
-    this.setState({ loading: true });
-    api.station.startStationOperation(this.props.stationId, this.props.username, 'P').then((res) => {
-      // return 1 if success, 0 if failed
-      if (!res.data) {
+    api.station.startStationOperation('P').then((res) => {
+      if (!res.success) {
         toast.error('Cannot start station. Please contact your system admin');
       }
       this.log.info('[PICK TASK] Station Started with P');
-      // this.setState({ loading: false }, this.retrievePickOrderReocrds);
-    }).catch((e) => {
+    }).catch(() => {
       toast.error('Server Error. Please contact your system admin');
       this.log.info('[PICK TASK] ERROR');
-      this.setState({ loading: false });
-      console.error(e);
+    });
+  }
+
+  bindBinToOrder = (binBarCode, orderBarCode) => {
+    api.pick.bindBinToOrder(orderBarCode, binBarCode).then((res) => {
+      if (!res.success) {
+        toast.error(res.data);
+        return;
+      }
+
+      toast.success(`${binBarCode} succuessfully bind to ${orderBarCode}`);
+      const { newOrdersList } = this.state;
+      newOrdersList[newOrdersList.length - 1].binBarCode = binBarCode;
+      this.setState({ newOrdersList: [...newOrdersList] }, () => {
+        this.setState({ ordersList: [...newOrdersList] });
+      });
+      // TODO: add binBarcode to newOrdersList obj in order to show.
     });
   }
 
@@ -160,10 +221,50 @@ class PickTaskPage extends Component {
 
   handleStartBtn = () => {
     this.log.info('[HANDLE START BTN] Btn clicked');
+    const barcodeList = this.state.newOrdersList.map(obj => obj.barCode);
+    api.pick.startPickTask(barcodeList).then((res) => {
+      if (res.success) {
+        this.props.history.push('/operation');
+      }
+    });
+  }
+
+  handleRemoveOrder = (index) => {
+    this.deleteIndex = index;
+    this.setState({ openRemoveConfirm: true });
+  }
+
+  handleRemoveConfirmAction(result) {
+    if (result) {
+      const { newOrdersList } = this.state;
+      newOrdersList.splice(this.deleteIndex, 1);
+      this.setState({ newOrdersList: [...newOrdersList] });
+    }
+    this.setState({ openRemoveConfirm: false });
+  }
+
+  handleBinScanChange = (e, { value }) => {
+    this.setState({ binBarcode: value });
+  }
+
+  handleBinScanSubmit = () => {
+    if (this.state.binBarcode === '') {
+      this.setState({ binScanErrorMessage: 'Cannot be empty' });
+      return;
+    }
+
+    const { newOrdersList } = this.state;
+    const lastOrderBarcode = newOrdersList[newOrdersList.length - 1].barCode;
+    this.bindBinToOrder(this.state.binBarcode, lastOrderBarcode);
+    this.setState({ openBinScanModal: false, binBarcode: '' });
+    this.focusInput();
   }
 
   render() {
-    const { tableLoading, ordersList, inputLoading, pages, activeTaskType } = this.state;
+    const {
+      tableLoading, ordersList, newOrdersList, inputLoading, pages, activeTaskType,
+      openBinScanModal, binBarcode, openRemoveConfirm, binScanErrorMessage,
+    } = this.state;
     const { t } = this.props;
 
     return (
@@ -181,13 +282,21 @@ class PickTaskPage extends Component {
           <Grid.Row>
             <Grid.Column>
               <div className="orderlist-table-container">
-                <OrderListTable
-                  listData={ordersList}
-                  loading={tableLoading}
-                  columns={PickOrderTableColumns}
-                  onFetchData={this.handleFetchTableData}
-                  pages={pages}
-                />
+                { activeTaskType === '0' ? (
+                  <OrderListTable
+                    listData={newOrdersList}
+                    loading={tableLoading}
+                    columns={this.NewOrderTableColumn}
+                  />
+                ) : (
+                  <OrderListTable
+                    listData={ordersList}
+                    loading={tableLoading}
+                    columns={PickOrderTableColumns}
+                    onFetchData={this.handleFetchTableData}
+                    pages={pages}
+                  />
+                )}
               </div>
             </Grid.Column>
           </Grid.Row>
@@ -199,22 +308,47 @@ class PickTaskPage extends Component {
                   size="big"
                   ref={this.scanRef}
                   loading={inputLoading}
+                  disabled={newOrdersList.length >= 5}
                   placeholder="Enter Barcode"
                 />
               )}
             </Grid.Column>
             <Grid.Column width={11}>
               <div className="order-list-btn-group">
-                <Button size="huge" primary onClick={() => this.handleStartBtn()}>
+                <Button
+                  size="huge"
+                  primary
+                  onClick={() => this.handleStartBtn()}
+                  disabled={newOrdersList.length === 0}
+                >
                   {t('label.start')}
                 </Button>
-                <Button size="huge" secondary onClick={() => this.handlePauseBtn()}>
+                {/* <Button size="huge" secondary onClick={() => this.handlePauseBtn()}>
                   {t('label.pause')}
-                </Button>
+                </Button> */}
               </div>
             </Grid.Column>
           </Grid.Row>
         </Grid>
+
+        <InputDialogModal
+          open={openBinScanModal}
+          headerText="Scan Bin binBarcode"
+          inputValue={binBarcode}
+          onClose={() => {}}
+          onInputChange={this.handleBinScanChange}
+          onSubmit={this.handleBinScanSubmit}
+          errorMessage={binScanErrorMessage}
+          inputType="text"
+        />
+
+        <ConfirmDialogModal
+          size="mini"
+          open={openRemoveConfirm}
+          close={this.handleRemoveConfirmAction}
+          header="Remove Order"
+          content="Are you sure you want to remove this order?"
+        />
       </div>
     );
   }
@@ -225,7 +359,6 @@ PickTaskPage.propTypes = {
     push: PropTypes.func.isRequired,
     goBack: PropTypes.func.isRequired,
   }).isRequired,
-  username: PropTypes.string.isRequired,
   stationId: PropTypes.string.isRequired,
   setStationTaskType: PropTypes.func.isRequired,
 };

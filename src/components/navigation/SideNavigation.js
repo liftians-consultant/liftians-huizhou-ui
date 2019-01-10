@@ -71,22 +71,26 @@ class SideNavigation extends Component {
           api.station.stopStationOperation(this.stationId, this.props.username, 'P').then((response) => {
             if (response.data) {
               console.log('[STOP STATION OPERATION] SUCCESS');
-              api.station.deactivateStationWithUser(this.stationId, this.props.username).then(() => {
+              api.station.deactivateStation(this.stationId).then(() => {
                 console.log('[DEACTIVATE STATION] Station Deactivated');
-                this.props.unlinkAllBinFromHolder(this.stationId).then((result) => {
-                  if (result) {
-                    toast.info('All bin unlinked from holder');
-                  } else {
-                    toast.warn('Bin unlink from holder failed');
-                  }
-                });
-                this.props.logout().then((result) => {
-                  if (result) {
-                    toast.success('Successfully logged out');
-                  }
-                });
+                if (res.success) {
+                  // this.props.unlinkAllBinFromHolder(this.stationId).then((result) => {
+                  //   if (result) {
+                  //     toast.info('All bin unlinked from holder');
+                  //   } else {
+                  //     toast.warn('Bin unlink from holder failed');
+                  //   }
+                  // });
+                  this.props.logout().then((result) => {
+                    if (result) {
+                      toast.success('Successfully logged out');
+                    }
+                  });
+                } else {
+                  toast.error('Error while deactivating station');
+                }
               }).catch(() => {
-                toast.error('Error while deactivating station');
+                toast.error('Server Error while deactivating station');
                 console.log('[ERROR] error while deactivating station');
               });
             } else {

@@ -10,8 +10,8 @@ const PickOrderTableColumns = [
     accessor: 'quantity',
     maxWidth: 100,
   }, {
-    Header: 'UserId',
-    accessor: 'userId',
+    Header: 'Bin Barcode',
+    accessor: 'binBarCode',
   }, {
     Header: 'Status',
     accessor: 'statusName',

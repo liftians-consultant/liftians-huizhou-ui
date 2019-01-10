@@ -53,9 +53,8 @@ class ServerSettingModal extends Component {
         trigger={<Button className="setting-btn" icon="cogs" size="massive" />}
         size="tiny"
         open={open}
-        onOpen={this.open}
+        onOpen={() => console.log('opennnn')}
         onClose={this.close}
-        style={{ marginTop: '10%', marginLeft: 'auto', marginRight: 'auto' }}
       >
         <Modal.Header>
           <Icon name="cogs" size="large" />

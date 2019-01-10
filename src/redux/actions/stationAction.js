@@ -20,10 +20,9 @@ export const setStationId = stationId => (dispatch, getState) => {
   dispatch({ type: STATION_ID_SET, station });
 };
 
-export const activateStation = stationId => (dispatch, getState) => {
-  const { user } = getState();
-  api.station.activateStationWithUser(stationId, user.username).then((res) => {
-    if (res === 1) {
+export const activateStation = stationId => (dispatch) => {
+  api.station.activateStation(stationId).then((res) => {
+    if (res.success) {
       dispatch(stationActivateSuccess());
     } else {
       dispatch(stationActivateError());

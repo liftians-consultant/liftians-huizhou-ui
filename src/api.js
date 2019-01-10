@@ -51,44 +51,36 @@ const status = {
 };
 
 const station = {
-  activateStationWithUser: (stationId, empId) => axios.post(`${appConfig.getApiUrl()}/Setup`, {
-    name: 'ActivateStationOperation',
-    parameter: [String(stationId), empId, '4'],
-  }).then(res => res.data),
+  activateStation: stationId => wmsRequest('ACTIVATE_STATION', {
+    stationId,
+  }).then(res => parseResult(res)),
 
-  deactivateStationWithUser: (stationId, empId) => axios.post(`${appConfig.getApiUrl()}/Setup`, {
-    name: 'DeactivateStationOperation',
-    parameter: [String(stationId), empId],
-  }).then(res => res.data),
+  deactivateStation: () => wmsRequest('DEACTIVATE_STATION')
+    .then(res => parseResult(res)),
 
   checkCurrentUnFinishTask: stationId => wmsRequest('CURRENT_UNFINISH_TASK', stationId)
     .then(res => parseJSON(res)),
 
-  atStationPodLayoutInfo: stationId => axios.post(`${appConfig.getApiUrl()}/Common`, {
-    name: 'AtStationPodLayoutInfo',
-    parameter: [
-      String(stationId),
-    ],
-  }),
+  getStationPodLayout: () => wmsRequest('GET_CURRENT_POD_LAYOUT')
+    .then(res => parseResult(res)),
 
-  getPodLayoutInfoByTaskID: taskId => axios.post(`${appConfig.getApiUrl()}/Common`, {
-    name: 'GetPodLayoutInfoByTaskID',
-    parameter: [
-      String(taskId),
-    ],
-  }),
+  // getPodLayoutInfoByTaskID: taskId => axios.post(`${appConfig.getApiUrl()}/Common`, {
+  //   name: 'GetPodLayoutInfoByTaskID',
+  //   parameter: [
+  //     String(taskId),
+  //   ],
+  // }),
+
+  getStationProductInfo: () => wmsRequest('GET_CURRENT_PRODUCT_INFO')
+    .then(res => parseResult(res)),
 
   atStationTask: stationId => axios.get(`${appConfig.getApiUrl()}/atStation/CurrentTask?stationID=${stationId}`),
 
-  startStationOperation: (stationId, empId, operationType) => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'StartStationOperation',
-    parameter: [stationId, empId, operationType],
-  }),
+  startStationOperation: operationType => wmsRequest('START_STATION_OPERATION', operationType)
+    .then(res => parseResult(res)),
 
-  stopStationOperation: (stationId, empId, taskType) => axios.post(`${appConfig.getApiUrl()}/Setup`, {
-    name: 'StopStationOperation',
-    parameter: [stationId, empId, taskType],
-  }),
+  stopStationOperation: () => wmsRequest('STOP_STATION_OPERATION')
+    .then(res => parseResult(res)),
 
   forcePodToLeaveStationByTaskId: (stationId, taskId) => axios.post(`${appConfig.getApiUrl()}/Common`, {
     name: 'ForcePod2LeaveStationByTaskID',
@@ -139,7 +131,7 @@ const pick = {
       batch: '005',
       updateTime: 1546528763387,
       warehouse: 'H180',
-      barCode: '86566337',
+      barCode: '86566337' + (Math.floor(Math.random() * 10) + 1),
       manufacturer: 2,
       unit: 'GM',
       areaId: 0,
@@ -156,10 +148,28 @@ const pick = {
     pageSize,
   }).then(res => parseResult(res)),
 
+
+  startPickTask: orderList => wmsRequest('START_DELIVERY_TASK', orderList)
+    .then(res => parseResult(res)),
+
   // retrievePickOrderItems: orderId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
   //   name: 'DisplayPickOrderDetail',
   //   parameter: [orderId],
   // }),
+
+  pushDeliveryProcess: (type, barCode) => wmsRequest('PUSH_DELIVERY_PROCESS', {
+    type,
+    barCode,
+  }).then(res => parseResult(res)),
+
+  // bindBinToOrder: (orderBarCode, binBarCode) => wmsRequest('DELIVERY_BIND_BIN', {
+  //   orderBarCode,
+  //   binBarCode,
+  // }).then(res => parseResult(res)),
+
+  bindBinToOrder: (orderBarCode, binBarCode) => Promise.resolve({
+    success: true,
+  }),
 
   callServerGeneratePickTask: stationId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
     name: 'GenPickTask',

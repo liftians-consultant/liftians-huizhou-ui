@@ -18,7 +18,6 @@ class ConfirmDialogModal extends Component {
         onConfirm={() => this.clickHandler(true)}
         header={header || 'Confirm'}
         content={content || 'Are you sure?'}
-        style={{ marginTop: '20%', marginLeft: 'auto', marginRight: 'auto' }}
       />
     );
   }
