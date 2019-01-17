@@ -4,6 +4,8 @@ import { STATION_ID_SET,
   STATION_CURRENT_UNFINISH_TASK_FETCHED,
   SET_STATION_TASK_TYPE,
 } from 'redux/types';
+
+import { toast } from 'react-toastify';
 import api from 'api';
 
 export const stationActivateSuccess = () => ({
@@ -20,9 +22,10 @@ export const setStationId = stationId => (dispatch, getState) => {
   dispatch({ type: STATION_ID_SET, station });
 };
 
-export const activateStation = stationId => (dispatch) => {
-  api.station.activateStation(stationId).then((res) => {
+export const activateStation = (stationId, userId) => (dispatch) => {
+  api.station.activateStation(stationId, userId).then((res) => {
     if (res.success) {
+      toast.success('Station Activated');
       dispatch(stationActivateSuccess());
     } else {
       dispatch(stationActivateError());
@@ -36,17 +39,19 @@ export const activateStation = stationId => (dispatch) => {
 export const checkCurrentUnFinishTask = stationId => dispatch =>
   // eslint-disable-next-line implicit-arrow-linebreak
   api.station.checkCurrentUnFinishTask(stationId).then((res) => {
-    const tasks = res.data;
     const stationInfo = {
       taskType: 'U',
       taskCount: 0,
     };
-    tasks.forEach((element) => {
-      if (element.cnt > 0) {
-        stationInfo.taskType = element.taskType;
-        stationInfo.taskCount = element.cnt;
-      }
-    });
+    if (res.success) {
+      const tasks = res.data;
+      tasks.forEach((element) => {
+        if (element.cnt > 0) {
+          stationInfo.taskType = element.taskType;
+          stationInfo.taskCount = element.cnt;
+        }
+      });
+    }
     dispatch({ type: STATION_CURRENT_UNFINISH_TASK_FETCHED, stationInfo });
     return stationInfo;
   });

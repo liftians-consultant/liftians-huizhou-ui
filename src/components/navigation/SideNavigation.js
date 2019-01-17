@@ -51,13 +51,15 @@ class SideNavigation extends Component {
   }
 
   handleOperationBtnClicked(url) {
-    this.props.checkCurrentUnFinishTask(this.props.stationId).then((res) => {
-      if (res.taskCount === 0) {
-        toast.info('No tasks currently exist.');
-      } else {
-        this.props.history.push(url);
-      }
-    });
+    // this.props.checkCurrentUnFinishTask(this.props.stationId).then((res) => {
+    //   if (res.taskCount === 0) {
+    //     toast.info('No tasks currently exist.');
+    //   } else {
+    //     this.props.history.push(url);
+    //   }
+    // });
+
+    this.props.history.push(url);
   }
 
   handleLogoutBtnClicked() {

@@ -78,6 +78,7 @@ class PickTaskPage extends Component {
     this.handleFetchTableData = this.handleFetchTableData.bind(this);
     this.backBtnHandler = this.backBtnHandler.bind(this);
     this.handleStartBtn = this.handleStartBtn.bind(this);
+    this.handleBinScanSubmit = this.handleBinScanSubmit.bind(this);
     this.handleRemoveConfirmAction = this.handleRemoveConfirmAction.bind(this);
   }
 
@@ -85,6 +86,8 @@ class PickTaskPage extends Component {
     this.props.getTaskStatus();
     this.setStationTaskType();
     this.startStationOperationCall();
+
+    this.getStationUnfinsihedOrderList(1);
   }
 
   componentDidMount() {
@@ -132,8 +135,8 @@ class PickTaskPage extends Component {
       this.setState({ inputLoading: true });
 
       api.pick.retrieveOrderFromAsm(e.target.value).then((res) => {
+        this.setState({ inputLoading: false });
         if (res.success) {
-          this.setState({ inputLoading: false });
           const record = res.data;
           const { newOrdersList } = this.state;
           const isDuplicate = newOrdersList.some(obj => obj.barCode === record.barCode);
@@ -142,9 +145,12 @@ class PickTaskPage extends Component {
           } else {
             newOrdersList.push(record);
             this.setState({ newOrdersList: [...newOrdersList] }, () => {
-              this.setState({ ordersList: [...newOrdersList], openBinScanModal: true });
+              // this.setState({ ordersList: [...newOrdersList], openBinScanModal: true });
+              // this.setState({ openBinScanModal: true });
             });
           }
+
+          this.getStationUnfinsihedOrderList(1);
 
           this.scanRef.current.inputRef.value = '';
           this.scanRef.current.focus();
@@ -166,7 +172,11 @@ class PickTaskPage extends Component {
         // TODO: Also need to set pages
         this.setState({
           tableLoading: false,
-          ordersList: this.transformOrderRecord(res.data),
+          ordersList: this.transformOrderRecord(res.data.list),
+        }, () => {
+          if (res.data.list.length > 0) {
+          this.setState({ openBinScanModal: true });
+        }
         });
       }
     }).catch(() => {
@@ -193,7 +203,7 @@ class PickTaskPage extends Component {
   bindBinToOrder = (binBarCode, orderBarCode) => {
     api.pick.bindBinToOrder(orderBarCode, binBarCode).then((res) => {
       if (!res.success) {
-        toast.error(res.data);
+        this.setState({ binBarcode: '' });
         return;
       }
 
@@ -203,7 +213,9 @@ class PickTaskPage extends Component {
       this.setState({ newOrdersList: [...newOrdersList] }, () => {
         this.setState({ ordersList: [...newOrdersList] });
       });
-      // TODO: add binBarcode to newOrdersList obj in order to show.
+
+      this.setState({ openBinScanModal: false, binBarcode: '' });
+      this.focusInput();
     });
   }
 
@@ -221,7 +233,8 @@ class PickTaskPage extends Component {
 
   handleStartBtn = () => {
     this.log.info('[HANDLE START BTN] Btn clicked');
-    const barcodeList = this.state.newOrdersList.map(obj => obj.barCode);
+    // const barcodeList = this.state.newOrdersList.map(obj => obj.id);
+    const barcodeList = this.state.ordersList.map(obj => obj.id);
     api.pick.startPickTask(barcodeList).then((res) => {
       if (res.success) {
         this.props.history.push('/operation');
@@ -253,11 +266,13 @@ class PickTaskPage extends Component {
       return;
     }
 
-    const { newOrdersList } = this.state;
-    const lastOrderBarcode = newOrdersList[newOrdersList.length - 1].barCode;
+    // const { newOrdersList } = this.state;
+    // const lastOrderBarcode = newOrdersList[newOrdersList.length - 1].barCode;
+
+    const { ordersList } = this.state;
+    const lastOrderBarcode = ordersList[ordersList.length - 1].barCode;
+
     this.bindBinToOrder(this.state.binBarcode, lastOrderBarcode);
-    this.setState({ openBinScanModal: false, binBarcode: '' });
-    this.focusInput();
   }
 
   render() {
@@ -283,10 +298,15 @@ class PickTaskPage extends Component {
             <Grid.Column>
               <div className="orderlist-table-container">
                 { activeTaskType === '0' ? (
+                  // <OrderListTable
+                  //   listData={newOrdersList}
+                  //   loading={tableLoading}
+                  //   columns={this.NewOrderTableColumn}
+                  // />
                   <OrderListTable
-                    listData={newOrdersList}
+                    listData={ordersList}
                     loading={tableLoading}
-                    columns={this.NewOrderTableColumn}
+                    columns={PickOrderTableColumns}
                   />
                 ) : (
                   <OrderListTable
@@ -319,7 +339,7 @@ class PickTaskPage extends Component {
                   size="huge"
                   primary
                   onClick={() => this.handleStartBtn()}
-                  disabled={newOrdersList.length === 0}
+                  // disabled={newOrdersList.length === 0}
                 >
                   {t('label.start')}
                 </Button>

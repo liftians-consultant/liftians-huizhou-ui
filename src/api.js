@@ -35,7 +35,7 @@ const user = {
   //   .then(res => res.headers.authorization),
 
   login: credentials => loginRequest(credentials)
-    .then(res => parseJSON(res)),
+    .then(res => parseResult(res)),
 
   logout: () => axios.post(`${appConfig.getApiUrl()}/logout`).then(res => res),
 
@@ -64,15 +64,107 @@ const station = {
   getStationPodLayout: () => wmsRequest('GET_CURRENT_POD_LAYOUT')
     .then(res => parseResult(res)),
 
-  // getPodLayoutInfoByTaskID: taskId => axios.post(`${appConfig.getApiUrl()}/Common`, {
-  //   name: 'GetPodLayoutInfoByTaskID',
-  //   parameter: [
-  //     String(taskId),
-  //   ],
-  // }),
+  // getStationPodLayout: () => Promise.resolve({
+  //   success: true,
+  //   data: [{
+  //   locationName: 'one',
+  //   barCode: '100123',
+  //   volume: 20,
+  //   podId: 10,
+  //   podSide: 0,
+  //   shelfId: 3,
+  //   boxId: 9
+  // }, {
+  //   locationName: 'one',
+  //   barCode: '100123',
+  //   volume: 20,
+  //   podId: 10,
+  //   podSide: 0,
+  //   shelfId: 4,
+  //   boxId: 2
+  // }, {
+  //   locationName: 'one',
+  //   barCode: '100123',
+  //   volume: 20,
+  //   podId: 10,
+  //   podSide: 0,
+  //   shelfId: 5,
+  //   boxId: 2
+  // }, {
+  //   locationName: 'one',
+  //   barCode: '100123',
+  //   volume: 20,
+  //   podId: 10,
+  //   podSide: 0,
+  //   shelfId: 3,
+  //   boxId: 2
+  // }, {
+  //   locationName: 'one',
+  //   barCode: '100123',
+  //   volume: 20,
+  //   podId: 10,
+  //   podSide: 0,
+  //   shelfId: 1,
+  //   boxId: 1
+  // }, {
+  //   locationName: 'one',
+  //   barCode: '100123',
+  //   volume: 20,
+  //   podId: 10,
+  //   podSide: 0,
+  //   shelfId: 2,
+  //   boxId: 1
+  // }, {
+  //   locationName: 'one',
+  //   barCode: '100123',
+  //   volume: 20,
+  //   podId: 10,
+  //   podSide: 0,
+  //   shelfId: 2,
+  //   boxId: 2
+  // }, {
+  //   locationName: 'one',
+  //   barCode: '100123',
+  //   volume: 20,
+  //   podId: 10,
+  //   podSide: 0,
+  //   shelfId: 2,
+  //   boxId: 5
+  // }]}),
 
   getStationProductInfo: () => wmsRequest('GET_CURRENT_PRODUCT_INFO')
-    .then(res => parseResult(res)),
+    .then(res => parseResult(res, ['13'])),
+
+  // getStationProductInfo: () => Promise.resolve({
+  //   success: true,
+  //   data: {
+  //     podId: 10,
+  //     podSide: 1,
+  //     shelfId: 3,
+  //     boxId: 1,
+  //     binBarCode: '12121',
+  //     binColor: '111',
+  //     deliveryTask: {
+  //       stat: 0,
+  //       quantity: 1.00456,
+  //       productId: 4,
+  //       productName: 'Kombucha is the best',
+  //       productBarCode: 'D8V203AC2B',
+  //       batch: '005',
+  //       updateTime: 1546528763387,
+  //       warehouse: 'H180',
+  //       barCode: '8656657',
+  //       manufacturer: 2,
+  //       unit: 'GM',
+  //       areaId: 0,
+  //       createTime: 1546528763387,
+  //       plant: 'HT001',
+  //       id: 0,
+  //       locationCode: '1000023061',
+  //       userId: 0,
+  //     },
+  //   },
+  // }),
 
   atStationTask: stationId => axios.get(`${appConfig.getApiUrl()}/atStation/CurrentTask?stationID=${stationId}`),
 
@@ -118,29 +210,29 @@ const pick = {
     parameter: [stationId],
   }),
 
-  // retrieveOrderFromAsm: (barCode) => wmsRequest('GET_ORDER_LABEL', barCode)
-  //   .then(res => parseJSON(res)),
+  retrieveOrderFromAsm: barCode => wmsRequest('GET_ORDER_LABEL', barCode)
+    .then(res => parseResult(res)),
 
-  retrieveOrderFromAsm: barCode => Promise.resolve({
-    success: true,
-    data: {
-      stat: 0,
-      quantity: 1.00456,
-      productId: 4,
-      productBarCode: 'D8V203AC2B',
-      batch: '005',
-      updateTime: 1546528763387,
-      warehouse: 'H180',
-      barCode: '86566337' + (Math.floor(Math.random() * 10) + 1),
-      manufacturer: 2,
-      unit: 'GM',
-      areaId: 0,
-      createTime: 1546528763387,
-      plant: 'HT001',
-      id: 0,
-      locationCode: '1000023061',
-    },
-  }),
+  // retrieveOrderFromAsm: barCode => Promise.resolve({
+  //   success: true,
+  //   data: {
+  //     stat: 0,
+  //     quantity: 1.00456,
+  //     productId: 4,
+  //     productBarCode: 'D8V203AC2B',
+  //     batch: '005',
+  //     updateTime: 1546528763387,
+  //     warehouse: 'H180',
+  //     barCode: '86566337' + (Math.floor(Math.random() * 10) + 1),
+  //     manufacturer: 2,
+  //     unit: 'GM',
+  //     areaId: 0,
+  //     createTime: 1546528763387,
+  //     plant: 'HT001',
+  //     id: 0,
+  //     locationCode: '1000023061',
+  //   },
+  // }),
 
   getStationOrderList: (stationId, pageNum, pageSize) => wmsRequest('GET_STATION_ORDER_LIST', {
     stationId,
@@ -160,7 +252,7 @@ const pick = {
   pushDeliveryProcess: (type, barCode) => wmsRequest('PUSH_DELIVERY_PROCESS', {
     type,
     barCode,
-  }).then(res => parseResult(res)),
+  }).then(res => parseResult(res, ['20', '21', '22'])),
 
   // bindBinToOrder: (orderBarCode, binBarCode) => wmsRequest('DELIVERY_BIND_BIN', {
   //   orderBarCode,

@@ -14,16 +14,15 @@ export const userLoggedOut = () => ({
 
 export const login = credentials => dispatch => api.user.login(credentials)
   .then((res) => {
-    if (res.result === '1') {
+    if (res.success) {
       localStorage.liftiansJWT = res.data.token;
       setAuthorizationHeader(res.data.token);
       const user = {
         token: res.data.token,
         username: credentials.username,
+        userId: res.data.userId,
       };
       dispatch(userLoggedIn(user));
-    } else if (res.result === '404') {
-      toast.error(res.data);
     }
   });
 

@@ -28,8 +28,8 @@ class HomePage extends Component {
   }
 
   componentWillMount() {
-    // this.props.getUserInfoById(this.props.username).then(() => {
-    // this.props.activateStation(this.props.stationId, this.props.username);
+    // this.props.getUserInfoById(this.props.userId).then(() => {
+    this.props.activateStation(this.props.stationId, this.props.userId);
     this.checkCurrentUnFinishTaskCall();
     // });
 
@@ -126,7 +126,7 @@ HomePage.propTypes = {
 function mapStateToProps(state) {
   return {
     isAuthenticated: !!state.user.token,
-    username: state.user.username,
+    userId: state.user.userId,
     stationInfo: state.station.info,
     stationId: state.station.id,
   };

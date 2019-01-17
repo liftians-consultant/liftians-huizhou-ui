@@ -4,7 +4,7 @@ export function parseJSON(result) {
   return result.data.liftians;
 }
 
-export function parseResult(result) {
+export function parseResult(result, byPassCode = []) {
   const res = result.data.liftians;
 
   if (res.result === '1') {
@@ -13,10 +13,16 @@ export function parseResult(result) {
       data: result.data.liftians.data,
     };
   } else {
-    toast.error(`Error Code: ${res.result}, \nMessage: ${res.data}`);
+    const errorMessage = `Error Code: ${res.result}, \nMessage: ${res.data}`;
+
+    if (!byPassCode.includes(res.result)) {
+      toast.error(errorMessage);
+    }
+
     return {
       success: false,
-      data: res.data,
+      code: res.result,
+      data: errorMessage,
     };
   }
 }
