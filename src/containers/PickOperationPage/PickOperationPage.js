@@ -69,9 +69,8 @@ class PickOperationPage extends Component {
     warningMessage: '',
     openTaskFinishModal: false,
     stillTask: 0,
+    taskStatus: 0, // 0 unstart, 1 already scan location, 2 already scan product
   };
-
-  taskStatus = 0; // 0 unstart, 1 already scan location, 2 already scan product
 
   idleCounter = 0;
 
@@ -103,7 +102,6 @@ class PickOperationPage extends Component {
     this.handleScanKeyPress = this.handleScanKeyPress.bind(this);
     this.handleShortageClick = this.handleShortageClick.bind(this);
     this.closeWarningModal = this.closeWarningModal.bind(this);
-    this.handleOkBtnClick = this.handleOkBtnClick.bind(this);
     this.handleShortageModalConfirmed = this.handleShortageModalConfirmed.bind(this);
   }
 
@@ -197,8 +195,8 @@ class PickOperationPage extends Component {
       if (!isReceive) {
         api.station.getStationProductInfo().then((res) => {
           if (res.success) {
-            this.taskStatus = res.data.taskProgress;
             this.setState({
+              taskStatus: res.data.taskProgress,
               currentPickProduct: res.data.deliveryTask || {},
               currentHighlightBox: {
                 row: res.data.shelfId,
@@ -239,10 +237,10 @@ class PickOperationPage extends Component {
       const scannedValue = e.target.value;
       let scanType;
 
-      console.log('before', this.taskStatus);
-      if (this.taskStatus === 0 || this.taskStatus === 2) {
+      const { taskStatus } = this.state;
+      if (taskStatus === 0 || taskStatus === 2) {
         scanType = LOCATION_TYPE;
-      } else if (this.taskStatus === 1) {
+      } else if (taskStatus === 1) {
         scanType = PRODUCT_TYPE;
       } else {
         scanType = null;
@@ -253,12 +251,14 @@ class PickOperationPage extends Component {
         switch (res.code) {
           case status.FIRST_LOCATION_SCAN:
             toast.success('Correct Location');
-            this.taskStatus = this.taskStatus + 1;
+            this.setState({ taskStatus: taskStatus + 1 });
             break;
           case status.PRODUCT_SCAN:
             toast.success('Correct Product');
-            this.taskStatus = this.taskStatus + 1;
-            this.setState({ showBox: true });
+            this.setState({
+              taskStatus: taskStatus + 1,
+              showBox: true,
+            });
             break;
           case status.SECOND_LOCATION_SCAN:
             toast.success('Correct Location');
@@ -272,7 +272,6 @@ class PickOperationPage extends Component {
           default:
             break;
         }
-        console.log('after', this.taskStatus);
       });
 
       this.setFocusToScanInput();
@@ -345,7 +344,7 @@ class PickOperationPage extends Component {
   render() {
     const { warningMessage, podInfo, currentPickProduct, pickedAmount, showBox,
       orderList, openWrongProductModal, barcode,
-      currentHighlightBox, currentBinColor,
+      currentHighlightBox, currentBinColor, taskStatus,
     } = this.state;
 
     return (
@@ -379,7 +378,7 @@ class PickOperationPage extends Component {
                   <div className="scan-input-group">
                     <br />
                     <div className="scan-description">
-                      {scanMessage[this.taskStatus]}
+                      {scanMessage[taskStatus]}
                     </div>
                     <div className="scan-input-holder">
                       <Input
