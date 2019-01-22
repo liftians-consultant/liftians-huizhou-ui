@@ -4,16 +4,17 @@ import { Segment, Button } from 'semantic-ui-react';
 import PodShelf from 'components/common/PodShelf/PodShelf';
 import OrderDetailListModal from 'components/Operation/OrderDetailListModal/OrderDetailListModal';
 
+const locationBarcodeStyle = {
+  display: 'inline-block',
+  marginTop: '10px',
+};
+
 const PodShelfInfo = props => (
   <div className="pod-shelf-info-display-container">
     <div className="pod-info-block">
-      <span>
-Pod #
-        { props.podInfo.podId }
-        {' '}
--
-        { props.podInfo.podSide === 0 ? 'A' : 'B' }
-      </span>
+      <span>{`Pod #${props.podInfo.podId} - ${props.podInfo.podSide === 0 ? 'A' : 'B'}`}</span>
+      <br />
+      <span style={locationBarcodeStyle}>{props.podInfo.locationBarcode}</span>
     </div>
     <Segment.Group>
       <Segment>

@@ -2,18 +2,13 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
-import { Grid, Button, Dimmer, Loader, Input } from 'semantic-ui-react';
+import { Grid, Dimmer, Loader, Input } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
 
 import api from 'api';
 import ETagService from 'services/ETagService';
 import ProductInfoDisplay from 'components/common/ProductInfoDisplay/ProductInfoDisplay';
-import NumPad from 'components/common/NumPad/NumPad';
 import WarningModal from 'components/common/WarningModal/WarningModal';
-import BinSetupModal from 'components/common/BinSetupModal/BinSetupModal';
-import ChangeBinModal from 'components/Operation/ChangeBinModal/ChangeBinModal';
-import BinGroup from 'components/Operation/BinGroup/BinGroup';
-import OrderFinishModal from 'components/Operation/OrderFinishModal/OrderFinishModal';
 import WrongProductModal from 'components/Operation/WrongProductModal/WrongProductModal';
 import PodShelfInfo from 'components/Operation/PodShelfInfo/PodShelfInfo';
 import ConfirmDialogModal from 'components/common/ConfirmDialogModal/ConfirmDialogModal';
@@ -42,12 +37,19 @@ const status = {
   SECOND_LOCATION_SCAN: '22',
 };
 
+const scanMessage = {
+  0: '請掃描 location code',
+  1: '請掃描 product code',
+  2: '請再次掃描 location code',
+};
+
 class PickOperationPage extends Component {
   state = {
     podInfo: {
       podId: 0,
       podSide: 0,
       shelfBoxes: [],
+      locationBarcode: '',
     },
     currentPickProduct: {
       quantity: 0,
@@ -61,14 +63,12 @@ class PickOperationPage extends Component {
     pickedAmount: 0,
     loading: true,
     barcode: '',
-    showBox: true,
-    openOrderFinishModal: false,
+    showBox: false,
     openWrongProductModal: false,
     openShortageConfirmModal: false,
     warningMessage: '',
-    currentBarcode: '', // just for assembly
-    binSetupLoading: false,
     openTaskFinishModal: false,
+    stillTask: 0,
   };
 
   taskStatus = 0; // 0 unstart, 1 already scan location, 2 already scan product
@@ -151,7 +151,11 @@ class PickOperationPage extends Component {
       if (res.data.length) {
         this.logInfo(`[GET POD INFO] Success: Pod height: ${res.data.length}`);
 
-        this.setState(prevState => ({
+        const { row, column } = this.state.currentHighlightBox;
+
+        const locationBarcode = res.data.find(obj => obj.shelfId === row && obj.boxId === column).barCode;
+
+        this.setState({
           podInfo: {
             podId: res.data[0].podId,
             podSide: res.data[0].podSide,
@@ -167,9 +171,10 @@ class PickOperationPage extends Component {
               .map(elmt => parseInt(elmt.boxId, 10))
               .reverse()
               .value(),
+            locationBarcode,
           },
           loading: false,
-        }));
+        });
         // this.setState({ podInfo, loading: false });
       } else {
         this.logInfo('[GET POD INFO] Failed: Empty array returned..');
@@ -185,6 +190,7 @@ class PickOperationPage extends Component {
 
   getProductInfo() {
     this.logInfo('[GET PRODUCT INFO] Getting product info');
+    this.setState({ loading: true });
 
     let isReceive = false;
     this.productInterval = setInterval(() => {
@@ -200,10 +206,10 @@ class PickOperationPage extends Component {
               },
               currentBinColor: res.data.binColor,
               showBox: false,
+              stillTask: res.data.stillTask,
             }, () => {
               isReceive = true;
             });
-
           }
         }).catch((err) => {
           this.log.error(`[ERROR] getting products list ${JSON.stringify(err)}`);
@@ -245,7 +251,7 @@ class PickOperationPage extends Component {
       api.pick.pushDeliveryProcess(scanType, scannedValue).then((res) => {
         console.log('code:', res);
         switch (res.code) {
-          case 'status.FIRST_LOCATION_SCAN':
+          case status.FIRST_LOCATION_SCAN:
             toast.success('Correct Location');
             this.taskStatus = this.taskStatus + 1;
             break;
@@ -257,11 +263,11 @@ class PickOperationPage extends Component {
           case status.SECOND_LOCATION_SCAN:
             toast.success('Correct Location');
             this.setState({ showBox: false });
+            if (this.state.stillTask === 0) {
+              toast.success('All Task Finished');
+              this.props.history.push('/pick-task');
+            }
             this.getProductInfo();
-
-            // if (res.data.isBotLeave) {
-
-            // }
             break;
           default:
             break;
@@ -326,19 +332,9 @@ class PickOperationPage extends Component {
     this.setState({ openShortageConfirmModal: false });
   }
 
-  /* SIMULATION */
-  handleWrongProductBtnClick() {
-
-  }
-
-
   closeWrongProductModal() {
     this.setState({ openWrongProductModal: false });
     this.setFocusToScanInput();
-  }
-
-  handleOkBtnClick() {
-
   }
 
   handleTaskFinishClose() {
@@ -348,8 +344,8 @@ class PickOperationPage extends Component {
 
   render() {
     const { warningMessage, podInfo, currentPickProduct, pickedAmount, showBox,
-      orderList, openOrderFinishModal, openWrongProductModal, barcode, currentBarcode,
-      binSetupLoading, currentHighlightBox, currentBinColor
+      orderList, openWrongProductModal, barcode,
+      currentHighlightBox, currentBinColor,
     } = this.state;
 
     return (
@@ -382,6 +378,9 @@ class PickOperationPage extends Component {
                 <div className="action-group-container">
                   <div className="scan-input-group">
                     <br />
+                    <div className="scan-description">
+                      {scanMessage[this.taskStatus]}
+                    </div>
                     <div className="scan-input-holder">
                       <Input
                         type="text"
@@ -391,13 +390,13 @@ class PickOperationPage extends Component {
                       />
                     </div>
                   </div>
-                  <div className="action-btn-group">
-                    {/* { process.env.REACT_APP_ENV === 'DEV' && (
+                  {/* <div className="action-btn-group">
+                    { process.env.REACT_APP_ENV === 'DEV' && (
                       <Button primary size="medium" onClick={() => this.handleScanBtnClick()}>
                         Scan
                       </Button>
-                    )} */}
-                  </div>
+                    )}
+                  </div> */}
                 </div>
               </div>
             </Grid.Column>
@@ -448,8 +447,6 @@ PickOperationPage.propTypes = {
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,
   }).isRequired,
-  stationId: PropTypes.string.isRequired,
-  username: PropTypes.string.isRequired,
 };
 
 function mapStateToProps(state) {

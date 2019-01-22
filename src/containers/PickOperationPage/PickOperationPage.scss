@@ -49,12 +49,18 @@
       vertical-align: bottom;
     }
   }
+
+  .scan-description {
+    color: #fff;
+    margin: 10px;
+    font-size: 1.5em;
+  }
 }
 
 @media(max-width: 1300px) {
 
   .pick-operation-page {
-    padding: 5% 2% 0;
+    padding: 3% 2% 0;
   }
   .pick-operation-page .action-group-container {
     margin-top: 10px;

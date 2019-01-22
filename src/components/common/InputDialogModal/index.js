@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Form, Input, Modal, Message } from 'semantic-ui-react';
 
 class InputDialogModal extends Component {
-
   componentDidUpdate(prevProps) {
     if (prevProps.open !== this.props.open && this.props.open === true) {
       setTimeout(() => {

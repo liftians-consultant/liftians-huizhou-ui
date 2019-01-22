@@ -24,10 +24,11 @@ export const setStationId = stationId => (dispatch, getState) => {
 
 export const activateStation = (stationId, userId) => (dispatch) => {
   api.station.activateStation(stationId, userId).then((res) => {
-    if (res.success) {
+    if (res.success && res.data) {
       toast.success('Station Activated');
       dispatch(stationActivateSuccess());
     } else {
+      toast.error('Cannot activate station');
       dispatch(stationActivateError());
     }
   }).catch(() => {

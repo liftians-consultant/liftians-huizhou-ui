@@ -240,28 +240,22 @@ const pick = {
     pageSize,
   }).then(res => parseResult(res)),
 
-
   startPickTask: orderList => wmsRequest('START_DELIVERY_TASK', orderList)
     .then(res => parseResult(res)),
-
-  // retrievePickOrderItems: orderId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-  //   name: 'DisplayPickOrderDetail',
-  //   parameter: [orderId],
-  // }),
 
   pushDeliveryProcess: (type, barCode) => wmsRequest('PUSH_DELIVERY_PROCESS', {
     type,
     barCode,
   }).then(res => parseResult(res, ['20', '21', '22'])),
 
-  // bindBinToOrder: (orderBarCode, binBarCode) => wmsRequest('DELIVERY_BIND_BIN', {
-  //   orderBarCode,
-  //   binBarCode,
-  // }).then(res => parseResult(res)),
+  bindBinToOrder: (orderBarCode, binBarCode) => wmsRequest('DELIVERY_BIND_BIN', {
+    orderBarCode,
+    binBarCode,
+  }).then(res => parseResult(res)),
 
-  bindBinToOrder: (orderBarCode, binBarCode) => Promise.resolve({
-    success: true,
-  }),
+  // bindBinToOrder: (orderBarCode, binBarCode) => Promise.resolve({
+  //   success: true,
+  // }),
 
   callServerGeneratePickTask: stationId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
     name: 'GenPickTask',

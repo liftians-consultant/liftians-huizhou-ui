@@ -9,10 +9,19 @@ const productImgBaseUrl = process.env.REACT_APP_IMAGE_BASE_URL;
 const ProductInfoDisplay = ({ product, amount, currentBarcode, showBox, binColor, unit }) => {
   const imageUrl = `${productImgBaseUrl}${product.productID}.png`;
 
+  const amountLength = amount.toString().length;
+  let amountFontSize;
+
+  if (amountLength > 6) {
+    amountFontSize = '6em';
+  } else {
+    amountFontSize = '8em';
+  }
+
   return (
     <div className="product-info-block">
       <div className="product-remain-container">
-        <span className="remain-amount">
+        <span className="remain-amount" style={({ fontSize: amountFontSize })}>
           {amount}
         </span>
         <div className="remain-unit">
@@ -64,7 +73,10 @@ ProductInfoDisplay.propTypes = {
   amount: PropTypes.number.isRequired,
   currentBarcode: PropTypes.string,
   showBox: PropTypes.bool,
-  binColor: PropTypes.string,
+  binColor: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
   unit: PropTypes.string,
 };
 

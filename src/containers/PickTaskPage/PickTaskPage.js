@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import moment from 'moment';
 import { compose } from 'recompose';
 import { withNamespaces } from 'react-i18next';
 import { Grid, Button, Input, Icon } from 'semantic-ui-react';
@@ -137,20 +136,38 @@ class PickTaskPage extends Component {
       api.pick.retrieveOrderFromAsm(e.target.value).then((res) => {
         this.setState({ inputLoading: false });
         if (res.success) {
-          const record = res.data;
-          const { newOrdersList } = this.state;
-          const isDuplicate = newOrdersList.some(obj => obj.barCode === record.barCode);
-          if (isDuplicate) {
-            toast.info(`Order ${record.barCode} already exist!`);
-          } else {
-            newOrdersList.push(record);
-            this.setState({ newOrdersList: [...newOrdersList] }, () => {
-              // this.setState({ ordersList: [...newOrdersList], openBinScanModal: true });
-              // this.setState({ openBinScanModal: true });
-            });
-          }
+          // const record = res.data;
+          // const { newOrdersList } = this.state;
+          // const isDuplicate = newOrdersList.some(obj => obj.barCode === record.barCode);
+          // if (isDuplicate) {
+          //   toast.info(`Order ${record.barCode} already exist!`);
+          // } else {
+          //   newOrdersList.push(record);
+          //   this.setState({ newOrdersList: [...newOrdersList] }, () => {
+          //     // this.setState({ ordersList: [...newOrdersList], openBinScanModal: true });
+          //     // this.setState({ openBinScanModal: true });
+          //   });
+          // }
 
-          this.getStationUnfinsihedOrderList(1);
+          const { stationId } = this.props;
+          this.setState({ tableLoading: true });
+
+          // get unstarted order
+          api.pick.getStationOrderList(stationId, 1, this.pageSize).then((result) => {
+            if (result.success) {
+              // TODO: Also need to set pages
+              this.setState({
+                tableLoading: false,
+                ordersList: this.transformOrderRecord(result.data.list),
+              }, () => {
+                if (result.data.list.length > 0) {
+                  this.setState({ openBinScanModal: true });
+                }
+              });
+            }
+          }).catch(() => {
+            this.setState({ tableLoading: false });
+          });
 
           this.scanRef.current.inputRef.value = '';
           this.scanRef.current.focus();
@@ -173,10 +190,6 @@ class PickTaskPage extends Component {
         this.setState({
           tableLoading: false,
           ordersList: this.transformOrderRecord(res.data.list),
-        }, () => {
-          if (res.data.list.length > 0) {
-          this.setState({ openBinScanModal: true });
-        }
         });
       }
     }).catch(() => {
@@ -208,11 +221,23 @@ class PickTaskPage extends Component {
       }
 
       toast.success(`${binBarCode} succuessfully bind to ${orderBarCode}`);
-      const { newOrdersList } = this.state;
-      newOrdersList[newOrdersList.length - 1].binBarCode = binBarCode;
-      this.setState({ newOrdersList: [...newOrdersList] }, () => {
-        this.setState({ ordersList: [...newOrdersList] });
-      });
+      // const { newOrdersList } = this.state;
+      // newOrdersList[newOrdersList.length - 1].binBarCode = binBarCode;
+      // this.setState({ newOrdersList: [...newOrdersList] }, () => {
+      //   this.setState({ ordersList: [...newOrdersList] });
+      // });
+
+      // const { ordersList } = this.state;
+
+      // const newList = ordersList.map(obj => {
+      //   if (obj.barCode === orderBarCode) {
+      //     ordersList.
+      //   }
+      // })
+      // newOrdersList[newOrdersList.length - 1].binBarCode = binBarCode;
+      // this.setState({ newOrdersList: [...newOrdersList] }, () => {
+      //   this.setState({ ordersList: [...newOrdersList] });
+      // });
 
       this.setState({ openBinScanModal: false, binBarcode: '' });
       this.focusInput();
@@ -237,6 +262,12 @@ class PickTaskPage extends Component {
     const barcodeList = this.state.ordersList.map(obj => obj.id);
     api.pick.startPickTask(barcodeList).then((res) => {
       if (res.success) {
+        if (res.data.success === 0) {
+          // res.data.errorDesc -> object
+          // TODO: print all error
+          toast.error('Cant start operation. Invalid data');
+          return;
+        }
         this.props.history.push('/operation');
       }
     });
