@@ -265,6 +265,7 @@ class PickOperationPage extends Component {
             this.setState({ showBox: false });
             if (this.state.stillTask === 0) {
               toast.success('All Task Finished');
+              clearInterval(this.productInterval);
               this.props.history.push('/pick-task');
             }
             this.getProductInfo();

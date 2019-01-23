@@ -166,42 +166,11 @@ const station = {
   //   },
   // }),
 
-  atStationTask: stationId => axios.get(`${appConfig.getApiUrl()}/atStation/CurrentTask?stationID=${stationId}`),
-
   startStationOperation: operationType => wmsRequest('START_STATION_OPERATION', operationType)
     .then(res => parseResult(res)),
 
   stopStationOperation: () => wmsRequest('STOP_STATION_OPERATION')
     .then(res => parseResult(res)),
-
-  forcePodToLeaveStationByTaskId: (stationId, taskId) => axios.post(`${appConfig.getApiUrl()}/Common`, {
-    name: 'ForcePod2LeaveStationByTaskID',
-    parameter: [
-      String(stationId),
-      String(taskId),
-    ],
-  }),
-
-  genStationTask: stationId => axios.post(`${appConfig.getApiUrl()}/Common`, {
-    name: 'GenStationTask',
-    parameter: [
-      String(stationId),
-    ],
-  }),
-
-  getStationDeviceList: stationId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'GetDeviceListByStationId',
-    parameter: [
-      String(stationId),
-    ],
-  }),
-
-  checkNumberOfStationTasks: stationId => axios.post(`${appConfig.getApiUrl()}/Common`, {
-    name: 'CheckNumberOfStationTasks',
-    parameter: [
-      String(stationId),
-    ],
-  }),
 };
 
 const pick = {
@@ -256,201 +225,88 @@ const pick = {
   // bindBinToOrder: (orderBarCode, binBarCode) => Promise.resolve({
   //   success: true,
   // }),
-
-  callServerGeneratePickTask: stationId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'GenPickTask',
-    parameter: [stationId],
-  }),
-
-  stopPickOperation: (stationId, empId) => station.stopStationOperation(stationId, empId, 'P'),
-
-  getPickInfoByTaskId: taskId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'GetPickInfoByTaskID',
-    parameter: [String(taskId)],
-  }),
-
-  atStationAfterPickProduct: data => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'AtStationAfterPickProduct',
-    parameter: [
-      String(data.stationId),
-      String(data.shelfId),
-      String(data.boxId),
-      String(data.orderNo),
-      String(data.sourceLinesId),
-      String(data.productId),
-      String(data.lotNo),
-      String(data.packageBarcode),
-      String(data.pickQuantity),
-      String(data.taskSubtype),
-      String(data.shortQty),
-    ],
-  }),
-
-  getProductSerialNum: data => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'GetProductByInvLocation',
-    parameter: [
-      String(data.podId),
-      String(data.podSide),
-      String(data.shelfId),
-      String(data.boxId),
-    ],
-  }),
-
-  atHolderAfterPickProduct: data => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'AtHolderAfterPickProduct',
-    parameter: [
-      String(data.holderId),
-      String(data.orderNo),
-      String(data.sourceLinesId),
-      String(data.productId),
-      String(data.lotNo),
-      String(data.taskSubtype),
-      String(data.pickQuantity),
-    ],
-  }),
-
-  checkIsOrderFinished: orderNum => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'IsOrderFinished',
-    parameter: [orderNum],
-  }),
-
-  getInventoryByProductBarcode: (barcode, podId, podSide) => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'GetInventoryByProductBarcode',
-    parameter: [
-      String(barcode),
-      String(podId || 0),
-      String(podSide || 0),
-    ],
-  }),
-
-  linkBinToHolder: (binId, deviceId) => axios.post(`${appConfig.getApiUrl()}/Common`, {
-    name: 'LinkBinToHolder',
-    parameter: [
-      String(binId),
-      String(deviceId),
-    ],
-  }),
-
-  getBinInfoAfterHolderTag: (binBarcode, holderId) => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'GetBinInfoAfterHolderTag',
-    parameter: [
-      String(binBarcode),
-      String(holderId),
-    ],
-  }),
-
-  getUnassignedHolderByStation: stationId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'GetUnassignedHolderByStation',
-    parameter: [
-      String(stationId),
-    ],
-  }),
-
-  unassignBinFromHolder: holderId => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'UnassignBinFromHolder',
-    parameter: [
-      String(holderId),
-    ],
-  }),
-
-  changeHolderBin: (binBarcode, holderId) => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'ChangeHolderBin',
-    parameter: [
-      String(binBarcode),
-      String(holderId),
-    ],
-  }),
-
-  unlinkAllBinFromHolder: stationId => axios.post(`${appConfig.getApiUrl()}/Common`, {
-    name: 'UnlinkAllBinFromHolder',
-    parameter: [
-      String(stationId),
-    ],
-  }),
-
-  getProductByLocationCode: location => axios.post(`${appConfig.getApiUrl()}/Pick`, {
-    name: 'GetProductByLocationCode',
-    parameter: [
-      String(location),
-    ],
-  }),
 };
 
 const replenish = {
-  retrieveReplenishRecords: (stationId, billTypeId, processId) => axios.post(`${appConfig.getApiUrl()}/Replenish`, {
-    name: 'DisplayReplenish',
-    parameter: [
-      String(stationId),
-      String(billTypeId),
-      String(processId),
-    ],
+  retreiveReceiveFromAsm: barCode => wmsRequest('GET_RECEIVE_LABEL', barCode)
+    .then(res => parseResult(res)),
+
+  // {
+  //   "stat": 0,
+  //   "quantity": 1.00456, "productId": 4, "productBarCode": "D8V203AC2B", "batch": "005",
+  //   "updateTime": 1546528763387, "warehouse": "H180",
+  //   "barCode": "8656657", "manufacturer": 2,
+  //   "unit": "GM",
+  //   "areaId": 0,
+  //   "createTime": 1546528763387, "plant": "HT001",
+  //   "id": 0,
+  //   "locationCode": "1000023061"
+  // }
+
+  // getReplenishList: (stationId, pageNum, pageSize) => wmsRequest('GET_REPLENISH_LIST', {
+  //   stationId,
+  //   pageNum,
+  //   pageSize,
+  // }).then(res => parseResult(res)),
+
+  getReplenishList: () => Promise.resolve({
+    pageNum: 100,
+    list: [{
+      stat: 0,
+      quantity: 1.00456,
+      productId: 4,
+      productBarCode: 'D8V203AC2B',
+      batch: '005',
+      updateTime: 1546528763387,
+      warehouse: 'H180',
+      barCode: '8656657',
+      manufacturer: 2,
+      unit: 'GM',
+      areaId: 0,
+      createTime: 1546528763387,
+      plant: 'HT001',
+      id: 0,
+      locationCode: '1000023061',
+      userId: 0,
+    }],
   }),
 
-  getReplenishDetailBySourceId: sourceId => axios.post(`${appConfig.getApiUrl()}/Replenish`, {
-    name: 'GetReplenishDetailBySourceID',
-    parameter: [String(sourceId)],
+  startReceiveTask: receiveList => wmsRequest('START_RECEIVE_TASK', receiveList)
+    .then(res => parseResult(res)),
+
+  // getReceiveProductInfo: () => wmsRequest('GET_RECEIVE_PRODUCT_INFO')
+  //   .then(res => parseResult(res)),
+
+  getReceiveProductInfo: () => Promise.resolve({
+    podId: 0,
+    boxId: 0,
+    podSide: 121,
+    shelfId: 999999,
+    stilltask: 0,
+    deliveryTask: {
+      stat: 0,
+      quantity: 1.00456,
+      productId: 4,
+      productBarCode: 'D8V203AC2B',
+      batch: '005',
+      updateTime: 1546528763387,
+      warehouse: 'H180',
+      barCode: '8656657',
+      manufacturer: 2,
+      unit: 'GM',
+      areaId: 0,
+      createTime: 1546528763387,
+      plant: 'HT001',
+      id: 0,
+      locationCode: '1000023061',
+      userId: 0,
+    },
   }),
 
-  DisplayReplenishDetail: requestId => axios.post(`${appConfig.getApiUrl()}/Replenish`, {
-    name: 'DisplayReplenishDetail',
-    parameter: [String(requestId)],
-  }),
-
-  replenishBySourceId: (stationId, userId, sourceIdList, jobPriority) => axios.post(`${appConfig.getApiUrl()}/Replenish`, {
-    name: 'ReplenishBySourceID',
-    parameter: [
-      String(stationId),
-      String(userId),
-      String(sourceIdList),
-      String(jobPriority),
-    ],
-  }),
-
-  replenishByBillNo: (stationId, userId, sourceIdList, jobPriority) => axios.post(`${appConfig.getApiUrl()}/Replenish`, {
-    name: 'ReplenishByBillNo',
-    parameter: [
-      String(stationId),
-      String(userId),
-      String(sourceIdList),
-      String(jobPriority),
-    ],
-  }),
-
-  getReplenishInfoByTaskId: taskId => axios.post(`${appConfig.getApiUrl()}/Replenish`, {
-    name: 'GetReplenishInfoByTaskID',
-    parameter: [String(taskId)],
-  }),
-
-  atStationSubmitReplenishProduct: data => axios.post(`${appConfig.getApiUrl()}/Replenish`, {
-    name: 'AtStationSubmitReplenishProduct',
-    parameter: [
-      String(data.taskId),
-      String(data.boxBarcode),
-      String(data.sourceLinesId),
-      String(data.productId),
-      String(data.productBarcodeList),
-      String(data.replenishQty),
-      String(data.locateActType),
-    ],
-  }),
-
-  getProductInfoByReplenishBillProduct: (billNo, productId) => axios.post(`${appConfig.getApiUrl()}/Replenish`, {
-    name: 'GetProductInfoByReplenishBillProduct',
-    parameter: [
-      String(billNo),
-      String(productId),
-    ],
-  }),
-
-  getProductInfoByTaskId: (taskId, sourceLinesId, productId, processStatusId) => axios.post(`${appConfig.getApiUrl()}/Replenish`, {
-    name: 'GetProductInfoByTaskID',
-    parameter: [
-      String(taskId),
-      String(sourceLinesId),
-      String(productId),
-      String(processStatusId),
-    ],
-  }),
+  pushReceiveProcess: (type, barCode) => wmsRequest('PUSH_RECEIVE_PROCESS', {
+    type,
+    barCode,
+  }).then(res => parseResult(res)),
 };
 
 const inventory = {

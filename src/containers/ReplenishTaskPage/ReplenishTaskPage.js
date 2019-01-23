@@ -1,330 +1,327 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Grid, Loader, Button, Input } from 'semantic-ui-react';
-import ReactTable from 'react-table';
-import checkboxHOC from 'react-table/lib/hoc/selectTable';
-import moment from 'moment';
+import { Grid, Button, Input, Icon } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
-
 import api from 'api';
-import { setStationTaskType } from 'redux/actions/stationAction';
-import ReplenishOrderTableColumns from 'models/ReplenishOrderTableColumns';
+
+import OrderListTable from 'components/common/OrderListTable/OrderListTable';
 import OperationTaskMenu from 'components/OperationTaskMenu/OperationTaskMenu';
-import OrderDetailTable from 'components/common/OrderDetailTable/OrderDetailTable';
+import ConfirmDialogModal from 'components/common/ConfirmDialogModal/ConfirmDialogModal';
+import PickOrderTableColumns from 'models/PickOrderTableModel';
+
+import { setStationTaskType } from 'redux/actions/stationAction';
+import { getTaskStatus } from 'redux/actions/statusAction';
 
 import './ReplenishTaskPage.css';
-
-const CheckboxTable = checkboxHOC(ReactTable);
 
 class ReplenishTaskPage extends Component {
   locale = process.env.REACT_APP_LOCALE;
 
-  // Dummy data, will retrieve from server
-  billTypeOptions = [
-    { key: 1, text: 'Regular Replenish', index: 1, value: '01' },
-    { key: 2, text: 'Return Replenish', index: 2, value: '11' },
-    // { key: 3, text: 'Adjustment Replenish', index: 3, value: '4' },
-  ];
+  pageSize = 10;
 
-  // Dummy data, will retrieve from server
-  processOptions = [
-    [
-      { key: 0, text: 'Unprocessed', index: 0, value: 0 },
-      { key: 1, text: 'Processing', index: 1, value: 100 },
-      { key: 2, text: 'Finished', index: 2, value: 1 },
-      { key: 3, text: 'Canceled', index: 3, value: -1 },
-    ],
-    // The following is the speciel case for Adjustment Process
-    [
-      { key: 0, text: 'Unprocessed', index: 0, value: 0 },
-      { key: 1, text: 'Finished', index: 1, value: 101 },
-      { key: 2, text: 'Canceled', index: 2, value: 100 },
-    ],
+  deleteIndex = 0;
+
+  taskTypeOption = [
+    { key: 1, text: 'New', index: 1, value: '0' },
+    { key: 2, text: 'In Progress', index: 2, value: '1' },
+    { key: 3, text: 'Complete', index: 3, value: '5' },
   ];
 
   state = {
-    activeBillType: '01',
-    activeProcessType: 0,
+    activeTaskType: '0',
     ordersList: [],
-    loading: false,
-    selection: [], // select react table
-    selectAll: false, // select react table
-    searchedList: [],
+    inputLoading: false,
+    tableLoading: false,
+    pages: 1,
+    openRemoveConfirm: false,
   }
 
+  NewOrderTableColumn = [
+    {
+      Header: 'Barcode',
+      accessor: 'barCode',
+    }, {
+      Header: 'Product',
+      accessor: 'productId',
+    }, {
+      Header: 'Quantity',
+      accessor: 'quantity',
+      maxWidth: 100,
+    }, {
+      Header: 'Bin Barcode',
+      accessor: 'binBarCode',
+    }, {
+      Header: 'Remove',
+      Cell: row => (
+        <Icon name="delete" size="big" onClick={() => this.handleRemoveOrder(row.index)} />
+      ),
+    },
+  ];
+
+  constructor() {
+    super();
+
+    this.scanRef = React.createRef();
+  }
+
+
   componentWillMount() {
+    this.props.getTaskStatus();
     this.setStationTaskType();
     this.startStationOperationCall();
-    this.getBillTypeName();
-    this.getProcessStatusName();
+  }
+
+  componentDidMount() {
+    this.focusInput();
+  }
+
+  focusInput() {
+    this.scanRef.current.focus();
+  }
+
+  transformOrderRecord(orderList) {
+    const { taskStatusList } = this.props;
+    return orderList.map((obj) => {
+      obj.statusName = taskStatusList[obj.stat].name;
+      return obj;
+    });
+  }
+
+  preProcessInputValue(value) {
+    if (value === 'START') {
+      this.handleStartBtn();
+      return true;
+    }
+
+    return false;
+  }
+
+  handleFetchTableData(state) {
+    this.getStationUnfinsihedOrderList(state.page);
+  }
+
+  handleInputChange(e) {
+    if (e.key === 'Enter' && e.target.value) {
+      e.persist();
+
+      if (this.preProcessInputValue(e.target.value)) {
+        return;
+      }
+
+      this.setState({ inputLoading: true });
+
+      api.replenish.retreiveReceiveFromAsm(e.target.value).then((res) => {
+        this.setState({ inputLoading: false });
+        if (res.success) {
+          const { stationId } = this.props;
+          this.setState({ tableLoading: true });
+
+          // get unstarted order
+          api.replenish.getReplenishList(stationId, 1, this.pageSize).then((result) => {
+            if (result.success) {
+              // TODO: Also need to set pages
+              this.setState({
+                tableLoading: false,
+                ordersList: this.transformOrderRecord(result.data.list),
+              });
+            }
+          }).catch(() => {
+            this.setState({ tableLoading: false });
+          });
+
+          this.scanRef.current.inputRef.value = '';
+          this.scanRef.current.focus();
+        }
+      }).catch(() => {
+        toast.error('[Server error] Error while retreive order from asm');
+        this.setState({ inputLoading: false });
+      });
+    }
+  }
+
+  getStationUnfinsihedOrderList(pageNum) {
+    const { stationId } = this.props;
+    this.setState({ tableLoading: true });
+
+    // get unstarted order
+    api.replenish.getReplenishList(stationId, pageNum, this.pageSize).then((res) => {
+      if (res.success) {
+        // TODO: Also need to set pages
+        this.setState({
+          tableLoading: false,
+          ordersList: this.transformOrderRecord(res.data.list),
+        });
+      }
+    }).catch(() => {
+      this.setState({ tableLoading: false });
+    });
   }
 
   setStationTaskType() {
     this.props.setStationTaskType('R');
   }
 
-  getBillTypeName() {
-    api.menu.getBillTypeName('R').then((res) => {
-      if (res.data && res.data.length) {
-        this.billTypeOptions = res.data.map((billType, index) => ({
-          key: index + 1,
-          text: billType.billTypeName,
-          index: index + 1,
-          value: billType.billType,
-        }));
+  startStationOperationCall() {
+    api.station.startStationOperation('R').then((res) => {
+      if (!res.success) {
+        toast.error('Cannot start station. Please contact your system admin');
       }
-    });
-  }
-
-  getProcessStatusName() {
-    api.menu.getProcessStatusName('R').then((res) => {
-      if (res.data && res.data.length) {
-        this.processOptions[0] = res.data.map((processType, index) => ({
-          key: index,
-          text: this.locale === 'CHN' ? processType.processStatusCHN : processType.processStatus,
-          index,
-          value: processType.processStatusID,
-        }));
-      }
-    });
-  }
-
-  retrieveReplenishRecords = () => {
-    this.setState({ loading: true });
-    console.log(`[RETRIEVE REPLENISH TASK] BillType: ${this.state.activeBillType}, ProcessType: ${this.state.activeProcessType}`);
-    api.replenish.retrieveReplenishRecords(this.props.stationId, this.state.activeBillType, this.state.activeProcessType).then((res) => {
-      console.log('[RETRIEVE REPLENISH TASK] Record Retrieved', res.data);
-      res.data.map((object) => {
-        object.replenishDate = moment(object.pick_DATE).format(process.env.REACT_APP_TABLE_DATE_FORMAT);
-        object.processStatus = this.locale === 'CHN' ? object.processStatusCHN : object.processStatus;
-        return object;
-      });
-      this.setState({ ordersList: res.data, loading: false }, this.filterOrderListBySourceId);
+      this.log.info('[REPLENISH TASK] Station Started with P');
+    }).catch(() => {
+      toast.error('Server Error. Please contact your system admin');
+      this.log.info('[REPLENISH TASK] ERROR');
     });
   }
 
   handleTaskChange = (e, { value }) => {
-    this.setState({ activeBillType: value, activeProcessType: 0 }, this.retrieveReplenishRecords);
-  }
-
-  handleProcessChange = (e, { value }) => {
-    this.setState({ activeProcessType: value }, this.retrieveReplenishRecords);
-  };
-
-  handleRequestPodBtn() {
-    const sourceIdList = this.state.selection.join(',');
-    api.replenish.replenishByBillNo(this.props.stationId, this.props.username, sourceIdList, 1).then(() => {
-      console.log('Going into replenish operation page~~~~');
-      this.props.history.push('/replenish-operation');
-    });
-  }
-
-  handleContinueBtn() {
-    const { searchedList } = this.state;
-    const sourceIdList = searchedList.map(item => item.replenishBillNo).join(',');
-    api.replenish.replenishByBillNo(this.props.stationId, this.props.username, sourceIdList, 1).then(() => {
-      console.log('Continue going into replenish operation page.');
-      this.props.history.push('/replenish-operation');
-    });
-  }
-
-  handleSearchChange = (e, { value }) => {
-    this.filterOrderListBySourceId(value);
-  };
-
-  filterOrderListBySourceId(keyword = '') {
-    const { ordersList } = this.state;
-    const filteredList = ordersList.filter(order => String(order.sourceID).indexOf(keyword) !== -1);
-
-    this.setState({ searchedList: filteredList });
-  }
-
-
-  startStationOperationCall() {
-    this.setState({ loading: true });
-    api.station.startStationOperation(this.props.stationId, this.props.username, 'R').then((res) => {
-      // return 1 if success, 0 if failed
-      if (!res.data) {
-        toast.error('Cannot start station. Please contact your system admin');
+    this.setState({ activeTaskType: value }, () => {
+      if (value === '0') {
+        this.setState(prevState => ({ ordersList: prevState.newOrdersList }));
+      } else if (value === '1') {
+        this.getStationUnfinsihedOrderList(1);
+      } else if (value === '5') {
+        // ignore now
       }
-      console.log('[REPLENISH PICK TASK] Station Started with R');
-      this.setState({ loading: false }, this.retrieveReplenishRecords);
-    }).catch((e) => {
-      toast.error('Server Error. Please contact your system admin');
-      this.setState({ loading: false });
-      console.error(e);
     });
   }
 
-  // For Select React Table
-  toggleSelection = (key) => {
-    // start off with the existing state
-    let selection = [
-      ...this.state.selection, // eslint-disable-line react/no-access-state-in-setstate
-    ];
-    const keyIndex = selection.indexOf(key);
-    // check to see if the key exists
-    if (keyIndex >= 0) {
-      // it does exist so we will remove it using destructing
-      selection = [
-        ...selection.slice(0, keyIndex),
-        ...selection.slice(keyIndex + 1),
-      ];
-    } else {
-      // it does not exist so add it
-      selection.push(key);
-    }
-    // update the state
-    this.setState({ selection });
+  handleStartBtn = () => {
+    this.log.info('[HANDLE START BTN] Btn clicked');
+    // const barcodeList = this.state.newOrdersList.map(obj => obj.id);
+    const barcodeList = this.state.ordersList.map(obj => obj.id);
+    api.replenish.startReceiveTask(barcodeList).then((res) => {
+      if (res.success) {
+        if (res.data.success === 0) {
+          // res.data.errorDesc -> object
+          // TODO: print all error
+          toast.error('Cant start operation. Invalid data');
+          return;
+        }
+        this.props.history.push('/operation');
+      }
+    });
   }
 
-  // For Select React Table
-  toggleAll = () => {
-    const selectAll = !this.state.selectAll; // eslint-disable-line react/no-access-state-in-setstate
-    const selection = [];
-    if (selectAll) {
-      // we need to get at the internals of ReactTable
-      const wrappedInstance = this.checkboxTable.getWrappedInstance();
-      // the 'sortedData' property contains the currently accessible records based on the filter and sort
-      const currentRecords = wrappedInstance.getResolvedState().sortedData;
-      // we just push all the IDs onto the selection array
-      currentRecords.forEach((item) => {
-        selection.push(item._original.sourceID); // eslint-disable-line no-underscore-dangle
-      });
-    }
-    this.setState({ selectAll, selection });
+  handleRemoveOrder = (index) => {
+    this.deleteIndex = index;
+    this.setState({ openRemoveConfirm: true });
   }
 
-  // For Select React Table
-  isSelected = key => this.state.selection.includes(key)
-
+  handleRemoveConfirmAction(result) {
+    if (result) {
+      const { newOrdersList } = this.state;
+      newOrdersList.splice(this.deleteIndex, 1);
+      this.setState({ newOrdersList: [...newOrdersList] });
+    }
+    this.setState({ openRemoveConfirm: false });
+  }
 
   render() {
-    const { toggleSelection, toggleAll, isSelected } = this;
-    const { activeBillType, activeProcessType, loading, ordersList, selectAll, searchedList, selection } = this.state;
-
-    const checkboxProps = {
-      selectAll,
-      isSelected,
-      toggleSelection,
-      toggleAll,
-      selectType: 'checkbox',
-      keyField: 'replenishBillNo',
-    };
+    const {
+      tableLoading, ordersList, newOrdersList, inputLoading, pages, activeTaskType,
+      openRemoveConfirm,
+    } = this.state;
+    const { t } = this.props;
 
     return (
       <div className="ui replenish-task-page-container">
-        <Loader content="Loading" active={this.state.loading} />
-
         <Grid>
           <Grid.Row>
             <Grid.Column width={16}>
               <OperationTaskMenu
-                activeBillType={activeBillType}
-                processOptions={this.processOptions}
-                billTypeOptions={this.billTypeOptions}
+                activeTaskType={activeTaskType}
+                taskTypeOption={this.taskTypeOption}
                 onTaskChange={this.handleTaskChange}
-                onProcessChange={this.handleProcessChange}
               />
             </Grid.Column>
           </Grid.Row>
           <Grid.Row>
             <Grid.Column>
               <div className="orderlist-table-container">
-                { String(activeProcessType) === '0' && (
-                <CheckboxTable
-                  ref={(r) => { this.checkboxTable = r; }}
-                  data={searchedList}
-                  columns={ReplenishOrderTableColumns}
-                  className="-striped -highlight replenish-task-table"
-                  SubComponent={row => <OrderDetailTable taskType="R" recordId={row.original.replenishBillNo} />}
-                  defaultPageSize={15}
-                  manual
-                  resizable={false}
-                  filterable={false}
-                  {...checkboxProps}
-                />
-                )}
-
-                { String(activeProcessType) !== '0' && (
-                  <ReactTable
-                    columns={ReplenishOrderTableColumns}
-                    data={searchedList}
-                    defaultPageSize={15}
-                    SubComponent={row => <OrderDetailTable taskType="R" recordId={row.original.replenishBillNo} />}
-                    loading={loading}
-                    manual
-                    resizable={false}
-                    filterable={false}
-                    className="-striped -highlight replenish-task-table"
+                { activeTaskType === '0' ? (
+                  // <OrderListTable
+                  //   listData={newOrdersList}
+                  //   loading={tableLoading}
+                  //   columns={this.NewOrderTableColumn}
+                  // />
+                  <OrderListTable
+                    listData={ordersList}
+                    loading={tableLoading}
+                    columns={PickOrderTableColumns}
+                  />
+                ) : (
+                  <OrderListTable
+                    listData={ordersList}
+                    loading={tableLoading}
+                    columns={PickOrderTableColumns}
+                    onFetchData={this.handleFetchTableData}
+                    pages={pages}
                   />
                 )}
-                {/* <OrderListTable listData={ ordersList } loading={ loading } columns={ ReplenishOrderTableColumns } /> */}
               </div>
             </Grid.Column>
           </Grid.Row>
           <Grid.Row>
-            <Grid.Column width={16}>
-              <div className="search-input-group">
+            <Grid.Column width={5}>
+              { activeTaskType === '0' && (
                 <Input
-                  onChange={this.handleSearchChange}
+                  onKeyPress={this.handleInputChange}
                   size="big"
-                  icon="search"
-                  iconPosition="left"
-                  placeholder="Enter Source ID..."
+                  ref={this.scanRef}
+                  loading={inputLoading}
+                  disabled={newOrdersList.length >= 5}
+                  placeholder="Enter Barcode"
                 />
-              </div>
+              )}
+            </Grid.Column>
+            <Grid.Column width={11}>
               <div className="order-list-btn-group">
-                { String(activeProcessType) !== '100' && (
-                  <Button
-                    size="huge"
-                    primary
-                    disabled={selection.length === 0}
-                    onClick={() => this.handleRequestPodBtn()}
-                  >
-                    Request POD
-                  </Button>
-                )}
-                { String(activeProcessType) === '100' && (
-                  <Button
-                    size="huge"
-                    disabled={ordersList.length === 0}
-                    onClick={() => this.handleContinueBtn()}
-                  >
-                    Continue Replenish
-                  </Button>
-                )}
-
-                {/* <Button size="huge" secondary>Pause</Button> */}
+                <Button
+                  size="huge"
+                  primary
+                  onClick={() => this.handleStartBtn()}
+                  // disabled={newOrdersList.length === 0}
+                >
+                  {t('label.start')}
+                </Button>
+                {/* <Button size="huge" secondary onClick={() => this.handlePauseBtn()}>
+                  {t('label.pause')}
+                </Button> */}
               </div>
             </Grid.Column>
           </Grid.Row>
         </Grid>
+
+        <ConfirmDialogModal
+          size="mini"
+          open={openRemoveConfirm}
+          close={this.handleRemoveConfirmAction}
+          header="Remove Order"
+          content="Are you sure you want to remove this order?"
+        />
       </div>
     );
   }
 }
 
-ReplenishTaskPage.defaultProps = {
-  taskCount: 0,
-};
-
 ReplenishTaskPage.propTypes = {
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,
   }).isRequired,
-  username: PropTypes.string.isRequired,
   stationId: PropTypes.string.isRequired,
-  taskCount: PropTypes.number,
+  setStationTaskType: PropTypes.func.isRequired,
 };
 
 function mapStateToProps(state) {
   return {
     username: state.user.username,
     stationId: state.station.id,
-    taskCount: state.station.info.taskCount,
+    taskStatusList: state.status.taskStatusList,
   };
 }
 
-export default connect(mapStateToProps, { setStationTaskType })(ReplenishTaskPage);
+export default connect(mapStateToProps, {
+  setStationTaskType,
+  getTaskStatus,
+})(ReplenishTaskPage);
