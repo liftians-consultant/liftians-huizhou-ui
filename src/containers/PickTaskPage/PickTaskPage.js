@@ -258,15 +258,15 @@ class PickTaskPage extends Component {
   }
 
   handleTaskChange = (e, { value }) => {
-    this.setState({ activeTaskType: value }, () => {
-      if (value === '0') {
-        this.setState(prevState => ({ ordersList: prevState.newOrdersList }));
-      } else if (value === '1') {
-        this.getStationUnfinsihedOrderList(1);
-      } else if (value === '5') {
-        // ignore now
-      }
-    });
+    // this.setState({ activeTaskType: value }, () => {
+    //   if (value === '0') {
+    //     this.setState(prevState => ({ ordersList: prevState.newOrdersList }));
+    //   } else if (value === '1') {
+    //     this.getStationUnfinsihedOrderList(1);
+    //   } else if (value === '5') {
+    //     // ignore now
+    //   }
+    // });
   }
 
   handleStartBtn = () => {
@@ -383,7 +383,7 @@ class PickTaskPage extends Component {
                   size="huge"
                   primary
                   onClick={() => this.handleStartBtn()}
-                  // disabled={newOrdersList.length === 0}
+                  disabled={ordersList.length === 0}
                 >
                   {t('label.start')}
                 </Button>
