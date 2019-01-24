@@ -6,7 +6,6 @@ import { Grid, Dimmer, Loader, Input } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
 
 import api from 'api';
-import ETagService from 'services/ETagService';
 import ProductInfoDisplay from 'components/common/ProductInfoDisplay/ProductInfoDisplay';
 import WarningModal from 'components/common/WarningModal/WarningModal';
 import WrongProductModal from 'components/Operation/WrongProductModal/WrongProductModal';
@@ -279,49 +278,13 @@ class PickOperationPage extends Component {
     }
   }
 
-  /* WARNING: SIMULATION ONLY */
-  handleScanBtnClick() {
-    if (!this.state.showBox) {
-      const data = {
-        podId: this.state.currentPickProduct.podID,
-        podSide: this.state.currentPickProduct.podSide,
-        shelfId: this.state.currentPickProduct.shelfID,
-        boxId: this.state.currentPickProduct.boxID,
-      };
-      api.pick.getProductSerialNum(data).then((res) => {
-        const barCodeIndex = res.data[0].barCode ? 0 : 1; // sometimes there will have empty barcode data return...
-        this.logInfo(`[SCANNED][SIMULATE] Get barcode ${res.data[barCodeIndex].barcode}`);
-        if (this.businessMode === 'pharmacy') {
-          const barcode = this.state.pickedAmount === 0 ? res.data[barCodeIndex].barcode : `${this.state.barcode},${res.data[barCodeIndex].barcode}`;
-          const pickedAmount = this.state.pickedAmount + 1;
-
-          ETagService.turnPickLightOnById(this.state.currentPickProduct.binPosition, pickedAmount);
-          this.logInfo(this.checkETagResondInterval);
-          if (!this.checkETagResondInterval) {
-            this.setPharmacyWaitForEtagInterval();
-          }
-
-          if (pickedAmount === this.state.currentPickProduct.quantity) {
-            this.setState({ showBox: true, barcode, pickedAmount });
-          } else {
-            this.setState({ barcode, pickedAmount });
-          }
-        } else if (this.businessMode === 'ecommerce') {
-          this.logInfo(`[SCANNED] SIMULATE Barcode: ${res.data[barCodeIndex].barcode}`);
-          this.setState({ showBox: true, barcode: res.data[barCodeIndex].barcode });
-          this.initPickLight();
-        }
-      });
-    } else {
-      this.setState({ barcode: '' });
-    }
-  }
-
+  // TODO: change
   handleShortageClick() {
     this.logInfo('[SHORTAGE] Button Clicked!');
     this.setState({ openShortageConfirmModal: true });
   }
 
+  // TODO: change
   handleShortageModalConfirmed(result) {
     if (result) {
       this.logInfo('[SHORTAGE] Modal Confirmed');
@@ -344,7 +307,7 @@ class PickOperationPage extends Component {
 
   render() {
     const { warningMessage, podInfo, currentPickProduct, pickedAmount, showBox,
-      orderList, openWrongProductModal, barcode,
+      openWrongProductModal, barcode,
       currentHighlightBox, currentBinColor, taskStatus,
     } = this.state;
 
@@ -359,7 +322,6 @@ class PickOperationPage extends Component {
               <PodShelfInfo
                 podInfo={podInfo}
                 highlightBox={currentHighlightBox}
-                orderList={orderList}
                 onShortageClicked={this.handleShortageClick}
                 showAdditionBtns
               />

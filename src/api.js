@@ -61,76 +61,77 @@ const station = {
   checkCurrentUnFinishTask: stationId => wmsRequest('CURRENT_UNFINISH_TASK', stationId)
     .then(res => parseJSON(res)),
 
-  getStationPodLayout: () => wmsRequest('GET_CURRENT_POD_LAYOUT')
-    .then(res => parseResult(res)),
+  // getStationPodLayout: () => wmsRequest('GET_CURRENT_POD_LAYOUT')
+  //   .then(res => parseResult(res)),
 
-  // getStationPodLayout: () => Promise.resolve({
-  //   success: true,
-  //   data: [{
-  //   locationName: 'one',
-  //   barCode: '100123',
-  //   volume: 20,
-  //   podId: 10,
-  //   podSide: 0,
-  //   shelfId: 3,
-  //   boxId: 9
-  // }, {
-  //   locationName: 'one',
-  //   barCode: '100123',
-  //   volume: 20,
-  //   podId: 10,
-  //   podSide: 0,
-  //   shelfId: 4,
-  //   boxId: 2
-  // }, {
-  //   locationName: 'one',
-  //   barCode: '100123',
-  //   volume: 20,
-  //   podId: 10,
-  //   podSide: 0,
-  //   shelfId: 5,
-  //   boxId: 2
-  // }, {
-  //   locationName: 'one',
-  //   barCode: '100123',
-  //   volume: 20,
-  //   podId: 10,
-  //   podSide: 0,
-  //   shelfId: 3,
-  //   boxId: 2
-  // }, {
-  //   locationName: 'one',
-  //   barCode: '100123',
-  //   volume: 20,
-  //   podId: 10,
-  //   podSide: 0,
-  //   shelfId: 1,
-  //   boxId: 1
-  // }, {
-  //   locationName: 'one',
-  //   barCode: '100123',
-  //   volume: 20,
-  //   podId: 10,
-  //   podSide: 0,
-  //   shelfId: 2,
-  //   boxId: 1
-  // }, {
-  //   locationName: 'one',
-  //   barCode: '100123',
-  //   volume: 20,
-  //   podId: 10,
-  //   podSide: 0,
-  //   shelfId: 2,
-  //   boxId: 2
-  // }, {
-  //   locationName: 'one',
-  //   barCode: '100123',
-  //   volume: 20,
-  //   podId: 10,
-  //   podSide: 0,
-  //   shelfId: 2,
-  //   boxId: 5
-  // }]}),
+  getStationPodLayout: () => Promise.resolve({
+    success: true,
+    data: [{
+      locationName: 'one',
+      barCode: '100123',
+      volume: 20,
+      podId: 10,
+      podSide: 0,
+      shelfId: 3,
+      boxId: 1,
+    }, {
+      locationName: 'one',
+      barCode: '100123',
+      volume: 20,
+      podId: 10,
+      podSide: 0,
+      shelfId: 4,
+      boxId: 2
+    }, {
+      locationName: 'one',
+      barCode: '100123',
+      volume: 20,
+      podId: 10,
+      podSide: 0,
+      shelfId: 5,
+      boxId: 2,
+    }, {
+      locationName: 'one',
+      barCode: '100123',
+      volume: 20,
+      podId: 10,
+      podSide: 0,
+      shelfId: 3,
+      boxId: 2,
+    }, {
+      locationName: 'one',
+      barCode: '100123',
+      volume: 20,
+      podId: 10,
+      podSide: 0,
+      shelfId: 1,
+      boxId: 1,
+    }, {
+      locationName: 'one',
+      barCode: '100123',
+      volume: 20,
+      podId: 10,
+      podSide: 0,
+      shelfId: 2,
+      boxId: 1,
+    }, {
+      locationName: 'one',
+      barCode: '100123',
+      volume: 20,
+      podId: 10,
+      podSide: 0,
+      shelfId: 2,
+      boxId: 2,
+    }, {
+      locationName: 'one',
+      barCode: '100123',
+      volume: 20,
+      podId: 10,
+      podSide: 0,
+      shelfId: 2,
+      boxId: 3,
+    }],
+  }),
 
   getStationProductInfo: () => wmsRequest('GET_CURRENT_PRODUCT_INFO')
     .then(res => parseResult(res, ['13'])),
@@ -228,20 +229,29 @@ const pick = {
 };
 
 const replenish = {
-  retreiveReceiveFromAsm: barCode => wmsRequest('GET_RECEIVE_LABEL', barCode)
-    .then(res => parseResult(res)),
+  // retreiveReceiveFromAsm: barCode => wmsRequest('GET_RECEIVE_LABEL', barCode)
+  //   .then(res => parseResult(res)),
 
-  // {
-  //   "stat": 0,
-  //   "quantity": 1.00456, "productId": 4, "productBarCode": "D8V203AC2B", "batch": "005",
-  //   "updateTime": 1546528763387, "warehouse": "H180",
-  //   "barCode": "8656657", "manufacturer": 2,
-  //   "unit": "GM",
-  //   "areaId": 0,
-  //   "createTime": 1546528763387, "plant": "HT001",
-  //   "id": 0,
-  //   "locationCode": "1000023061"
-  // }
+  retreiveReceiveFromAsm: () => Promise.resolve({
+    success: true,
+    data: {
+      stat: 0, 
+      quantity: 1.00456,
+      productId: 4,
+      productBarCode: 'D8V203AC2B',
+      batch: '005',
+      updateTime: 1546528763387,
+      warehouse: 'H180',
+      barCode: '8656657',
+      manufacturer: 2,
+      unit: 'GM',
+      areaId: 0,
+      createTime: 1546528763387,
+      plant: 'HT001',
+      id: 0,
+      locationCode: '1000023061',
+    }
+  }),
 
   // getReplenishList: (stationId, pageNum, pageSize) => wmsRequest('GET_REPLENISH_LIST', {
   //   stationId,
@@ -250,56 +260,71 @@ const replenish = {
   // }).then(res => parseResult(res)),
 
   getReplenishList: () => Promise.resolve({
-    pageNum: 100,
-    list: [{
-      stat: 0,
-      quantity: 1.00456,
-      productId: 4,
-      productBarCode: 'D8V203AC2B',
-      batch: '005',
-      updateTime: 1546528763387,
-      warehouse: 'H180',
-      barCode: '8656657',
-      manufacturer: 2,
-      unit: 'GM',
-      areaId: 0,
-      createTime: 1546528763387,
-      plant: 'HT001',
-      id: 0,
-      locationCode: '1000023061',
-      userId: 0,
-    }],
+    success: true,
+    data: {
+      pageNum: 100,
+      list: [{
+        stat: 0,
+        quantity: 1.00456,
+        productId: 4,
+        productBarCode: 'D8V203AC2B',
+        batch: '005',
+        updateTime: 1546528763387,
+        warehouse: 'H180',
+        barCode: '8656657',
+        manufacturer: 2,
+        unit: 'GM',
+        areaId: 0,
+        createTime: 1546528763387,
+        plant: 'HT001',
+        id: 0,
+        locationCode: '1000023061',
+        userId: 0,
+      }],
+    },
   }),
 
-  startReceiveTask: receiveList => wmsRequest('START_RECEIVE_TASK', receiveList)
-    .then(res => parseResult(res)),
+  // startReceiveTask: receiveList => wmsRequest('START_RECEIVE_TASK', receiveList)
+  //   .then(res => parseResult(res)),
+
+  startReceiveTask: () => Promise.resolve({
+    success: true,
+    data: {
+      success: 1,
+      error: 0,
+    },
+  }),
+
 
   // getReceiveProductInfo: () => wmsRequest('GET_RECEIVE_PRODUCT_INFO')
   //   .then(res => parseResult(res)),
 
   getReceiveProductInfo: () => Promise.resolve({
-    podId: 0,
-    boxId: 0,
-    podSide: 121,
-    shelfId: 999999,
-    stilltask: 0,
-    deliveryTask: {
-      stat: 0,
-      quantity: 1.00456,
-      productId: 4,
-      productBarCode: 'D8V203AC2B',
-      batch: '005',
-      updateTime: 1546528763387,
-      warehouse: 'H180',
-      barCode: '8656657',
-      manufacturer: 2,
-      unit: 'GM',
-      areaId: 0,
-      createTime: 1546528763387,
-      plant: 'HT001',
-      id: 0,
-      locationCode: '1000023061',
-      userId: 0,
+    success: true,
+    data: {
+      podId: 21,
+      boxId: 1,
+      podSide: 1,
+      shelfId: 999999,
+      stilltask: 0,
+      deliveryTask: {
+        stat: 0,
+        quantity: 1.00456,
+        productId: 4,
+        productBarCode: 'D8V203AC2B',
+        batch: '005',
+        updateTime: 1546528763387,
+        warehouse: 'H180',
+        barCode: '8656657',
+        manufacturer: 2,
+        unit: 'GM',
+        areaId: 0,
+        createTime: 1546528763387,
+        plant: 'HT001',
+        id: 0,
+        locationCode: '1000023061',
+        userId: 0,
+      },
     },
   }),
 

@@ -3,8 +3,10 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Grid, Button, Input, Icon } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
-import api from 'api';
+import { compose } from 'recompose';
+import { withNamespaces } from 'react-i18next';
 
+import api from 'api';
 import OrderListTable from 'components/common/OrderListTable/OrderListTable';
 import OperationTaskMenu from 'components/OperationTaskMenu/OperationTaskMenu';
 import ConfirmDialogModal from 'components/common/ConfirmDialogModal/ConfirmDialogModal';
@@ -14,8 +16,11 @@ import { setStationTaskType } from 'redux/actions/stationAction';
 import { getTaskStatus } from 'redux/actions/statusAction';
 
 import './ReplenishTaskPage.css';
+import * as log4js from 'log4js2';
 
 class ReplenishTaskPage extends Component {
+  log = log4js.getLogger('ReplenishTaskPage');
+
   locale = process.env.REACT_APP_LOCALE;
 
   pageSize = 10;
@@ -24,8 +29,8 @@ class ReplenishTaskPage extends Component {
 
   taskTypeOption = [
     { key: 1, text: 'New', index: 1, value: '0' },
-    { key: 2, text: 'In Progress', index: 2, value: '1' },
-    { key: 3, text: 'Complete', index: 3, value: '5' },
+    // { key: 2, text: 'In Progress', index: 2, value: '1' },
+    // { key: 3, text: 'Complete', index: 3, value: '5' },
   ];
 
   state = {
@@ -35,7 +40,7 @@ class ReplenishTaskPage extends Component {
     tableLoading: false,
     pages: 1,
     openRemoveConfirm: false,
-  }
+  };
 
   NewOrderTableColumn = [
     {
@@ -44,18 +49,31 @@ class ReplenishTaskPage extends Component {
     }, {
       Header: 'Product',
       accessor: 'productId',
+      maxWidth: 100,
     }, {
       Header: 'Quantity',
       accessor: 'quantity',
       maxWidth: 100,
     }, {
-      Header: 'Bin Barcode',
-      accessor: 'binBarCode',
+      Header: 'Unit',
+      accessor: 'unit',
+      maxWidth: 80,
+    }, {
+      Header: 'Batch',
+      accessor: 'batch',
+      maxWidth: 80,
+    }, {
+      Header: 'Manufacturer',
+      accessor: 'manufacturer',
+    }, {
+      Header: 'Status',
+      accessor: 'statusName',
     }, {
       Header: 'Remove',
       Cell: row => (
         <Icon name="delete" size="big" onClick={() => this.handleRemoveOrder(row.index)} />
       ),
+      maxWidth: 100,
     },
   ];
 
@@ -63,6 +81,10 @@ class ReplenishTaskPage extends Component {
     super();
 
     this.scanRef = React.createRef();
+    this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleFetchTableData = this.handleFetchTableData.bind(this);
+    this.handleStartBtn = this.handleStartBtn.bind(this);
+    this.handleRemoveConfirmAction = this.handleRemoveConfirmAction.bind(this);
   }
 
 
@@ -219,7 +241,7 @@ class ReplenishTaskPage extends Component {
 
   render() {
     const {
-      tableLoading, ordersList, newOrdersList, inputLoading, pages, activeTaskType,
+      tableLoading, ordersList, inputLoading, pages, activeTaskType,
       openRemoveConfirm,
     } = this.state;
     const { t } = this.props;
@@ -248,7 +270,7 @@ class ReplenishTaskPage extends Component {
                   <OrderListTable
                     listData={ordersList}
                     loading={tableLoading}
-                    columns={PickOrderTableColumns}
+                    columns={this.NewOrderTableColumn}
                   />
                 ) : (
                   <OrderListTable
@@ -270,7 +292,6 @@ class ReplenishTaskPage extends Component {
                   size="big"
                   ref={this.scanRef}
                   loading={inputLoading}
-                  disabled={newOrdersList.length >= 5}
                   placeholder="Enter Barcode"
                 />
               )}
@@ -281,7 +302,7 @@ class ReplenishTaskPage extends Component {
                   size="huge"
                   primary
                   onClick={() => this.handleStartBtn()}
-                  // disabled={newOrdersList.length === 0}
+                  disabled={ordersList.length === 0}
                 >
                   {t('label.start')}
                 </Button>
@@ -310,7 +331,6 @@ ReplenishTaskPage.propTypes = {
     push: PropTypes.func.isRequired,
   }).isRequired,
   stationId: PropTypes.string.isRequired,
-  setStationTaskType: PropTypes.func.isRequired,
 };
 
 function mapStateToProps(state) {
@@ -321,7 +341,10 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(mapStateToProps, {
-  setStationTaskType,
-  getTaskStatus,
-})(ReplenishTaskPage);
+export default compose(
+  connect(mapStateToProps, {
+    setStationTaskType,
+    getTaskStatus,
+  }),
+  withNamespaces(),
+)(ReplenishTaskPage);

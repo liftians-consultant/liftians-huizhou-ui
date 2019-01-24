@@ -30,8 +30,8 @@ class PickTaskPage extends Component {
 
   taskTypeOption = [
     { key: 1, text: 'New', index: 1, value: '0' },
-    { key: 2, text: 'In Progress', index: 2, value: '1' },
-    { key: 3, text: 'Complete', index: 3, value: '5' },
+    // { key: 2, text: 'In Progress', index: 2, value: '1' },
+    // { key: 3, text: 'Complete', index: 3, value: '5' },
   ];
 
   state = {
@@ -54,18 +54,31 @@ class PickTaskPage extends Component {
     }, {
       Header: 'Product',
       accessor: 'productId',
+      maxWidth: 100,
     }, {
       Header: 'Quantity',
       accessor: 'quantity',
       maxWidth: 100,
     }, {
-      Header: 'Bin Barcode',
-      accessor: 'binBarCode',
+      Header: 'Unit',
+      accessor: 'unit',
+      maxWidth: 80,
+    }, {
+      Header: 'Batch',
+      accessor: 'batch',
+      maxWidth: 80,
+    }, {
+      Header: 'Manufacturer',
+      accessor: 'manufacturer',
+    }, {
+      Header: 'Status',
+      accessor: 'statusName',
     }, {
       Header: 'Remove',
       Cell: row => (
         <Icon name="delete" size="big" onClick={() => this.handleRemoveOrder(row.index)} />
       ),
+      maxWidth: 100,
     },
   ];
 
@@ -337,7 +350,7 @@ class PickTaskPage extends Component {
                   <OrderListTable
                     listData={ordersList}
                     loading={tableLoading}
-                    columns={PickOrderTableColumns}
+                    columns={this.NewOrderTableColumn}
                   />
                 ) : (
                   <OrderListTable

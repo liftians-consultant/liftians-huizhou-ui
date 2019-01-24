@@ -23,7 +23,6 @@ const PodShelfInfo = props => (
     </Segment.Group>
     { props.showAdditionBtns && (
     <div>
-      { props.orderList.length > 0 && <OrderDetailListModal orderList={props.orderList} /> }
       <Button color="red" onClick={props.onShortageClicked}>Shortage</Button>
     </div>
     )}
@@ -34,7 +33,6 @@ const PodShelfInfo = props => (
 PodShelfInfo.propTypes = {
   podInfo: PropTypes.object.isRequired,
   highlightBox: PropTypes.object.isRequired,
-  orderList: PropTypes.array.isRequired,
   onShortageClicked: PropTypes.func.isRequired,
   showAdditionBtns: PropTypes.bool,
 };
