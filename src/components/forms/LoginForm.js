@@ -24,7 +24,9 @@ class LoginForm extends React.Component {
       this.setState({ loading: true });
       this.props
         .submit(this.state.data)
-        .catch((err) => {
+        .then(() => {
+          this.setState({ loading: false });
+        }).catch((err) => {
           console.log(err);
           let message = 'Login Error';
           if (err.message.indexOf('timeout') !== -1) {

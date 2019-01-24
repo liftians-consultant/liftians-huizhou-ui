@@ -1,7 +1,6 @@
 import { USER_LOGGED_IN, USER_LOGGED_OUT } from 'redux/types';
 import api from 'api';
 import setAuthorizationHeader from 'utils/setAuthorizationHeader';
-import { toast } from 'react-toastify';
 
 export const userLoggedIn = user => ({
   type: USER_LOGGED_IN,
@@ -23,7 +22,9 @@ export const login = credentials => dispatch => api.user.login(credentials)
         userId: res.data.userId,
       };
       dispatch(userLoggedIn(user));
+      return true;
     }
+    return false;
   });
 
 export const logout = () => dispatch => new Promise((resolve) => {
