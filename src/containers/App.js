@@ -23,6 +23,7 @@ import GenerateAccountPage from 'containers/GenerateAccountPage/GenerateAccountP
 import GenerateProductPage from 'containers/GenerateProductPage/GenerateProductPage';
 import GenerateDeliveryPage from 'containers/GenerateDeliveryPage/GenerateDeliveryPage';
 import GenerateReplenishmentPage from 'containers/GenerateReplenishmentPage/GenerateReplenishmentPage';
+import ChangeLanguagePage from 'containers/ChangeLanguagePage/ChangeLanguagePage';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 
@@ -55,6 +56,7 @@ const App = () => (
       <UserRoute path="/generate-product" exact component={GenerateProductPage} />
       <UserRoute path="/generate-delivery" exact component={GenerateDeliveryPage} />
       <UserRoute path="/generate-replenishment" exact component={GenerateReplenishmentPage} />
+      <UserRoute path="/language" exact component={ChangeLanguagePage} />
       <GuestRoute path="/login" component={LoginPage} />
       <UserRoute path="/" exact component={HomePage} />
     </Switch>

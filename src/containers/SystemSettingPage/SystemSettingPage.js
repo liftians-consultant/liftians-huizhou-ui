@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import { compose } from 'recompose';
+import { withNamespaces } from 'react-i18next';
 import { Grid } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
 
@@ -57,6 +59,8 @@ class SystemSettingPage extends Component {
   }
 
   render() {
+    const { t } = this.props;
+
     return (
       <div className="ui container system-setting-page-container menu-page">
         {/* <Button onClick={ () => this.backBtnHandler() }>Go Back</Button> */}
@@ -78,7 +82,7 @@ class SystemSettingPage extends Component {
               <MenuButton title="Volumne Change" name="volume-change" clickHandler={this.goToNowhere} />
             </Grid.Column>
             <Grid.Column>
-              <MenuButton title="User" name="user-profile" clickHandler={this.goToNowhere} />
+              <MenuButton title="Language" name="language" clickHandler={this.goToPage} />
             </Grid.Column>
             <Grid.Column>
               <MenuButton title="Task List" name="task-list" clickHandler={this.goToPage} />
@@ -115,4 +119,7 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(mapStateToProps, {})(SystemSettingPage);
+export default compose(
+  connect(mapStateToProps, {}),
+  withNamespaces(),
+)(SystemSettingPage);

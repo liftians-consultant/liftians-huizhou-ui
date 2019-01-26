@@ -1,4 +1,6 @@
 {
+  "//": "Common",
+  "button.submit": "提交",
   "//": "Home Page",
   "title.replenish": "入库",
   "title.pick": "出库",
@@ -14,5 +16,14 @@
   "//": "Pick Task Page",
   "label.start": "开始",
   "label.pause": "暂停",
-  "label.print": "列印"
+  "label.print": "列印",
+  "//": "Change Language Page",
+  "label.systemLanguage": "系统语言",
+  "setLanguageSuccess": "设置成功！",
+  "//": "Change Language Form",
+  "label.selectedLanguage": "选择语言:",
+  "//": "Operation Common",
+  "operation.waitingForPod": "等待货物到达",
+  "//": "Pick Operatoin",
+  "//": "Replenish Operation" 
 }
