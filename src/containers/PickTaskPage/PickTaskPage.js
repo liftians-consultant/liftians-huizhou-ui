@@ -95,11 +95,12 @@ class PickTaskPage extends Component {
   }
 
   componentWillMount() {
-    this.props.getTaskStatus();
     this.setStationTaskType();
     this.startStationOperationCall();
 
-    this.getStationUnfinsihedOrderList(1);
+    this.props.getTaskStatus().then(() => {
+      this.getStationUnfinsihedOrderList(1);
+    });
   }
 
   componentDidMount() {

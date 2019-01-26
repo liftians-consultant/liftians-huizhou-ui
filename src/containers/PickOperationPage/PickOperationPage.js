@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import { compose } from 'recompose';
+import { withNamespaces } from 'react-i18next';
 import _ from 'lodash';
 import { Grid, Dimmer, Loader, Input } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
@@ -97,7 +99,6 @@ class PickOperationPage extends Component {
     // Bind the this context to the handler function
     this.retrieveNextOrder = this.retrieveNextOrder.bind(this);
     this.closeWrongProductModal = this.closeWrongProductModal.bind(this);
-    this.handleScanBtnClick = this.handleScanBtnClick.bind(this);
     this.handleScanKeyPress = this.handleScanKeyPress.bind(this);
     this.handleShortageClick = this.handleShortageClick.bind(this);
     this.closeWarningModal = this.closeWarningModal.bind(this);
@@ -311,6 +312,8 @@ class PickOperationPage extends Component {
       currentHighlightBox, currentBinColor, taskStatus,
     } = this.state;
 
+    const { t } = this.props;
+
     return (
       <div className="pick-operation-page">
         <Dimmer active={this.state.loading}>
@@ -413,22 +416,18 @@ PickOperationPage.propTypes = {
 
 function mapStateToProps(state) {
   return {
-    username: state.user.username,
-    stationId: state.station.id,
-    taskCount: state.station.info.taskCount,
-    deviceList: state.operation.deviceList,
-    binSetupWaitlist: state.operation.binSetupWaitlist,
-    currentSetupHolder: state.operation.currentSetupHolder,
-    currentSetupHolderIndex: state.operation.currentSetupHolder.deviceIndex,
-    openChangeBinModal: state.operation.openChangeBinModal,
+
   };
 }
-export default connect(mapStateToProps, {
-  getStationDeviceList,
-  addHoldersToSetupWaitlist,
-  addBinToHolder,
-  unassignBinFromHolder,
-  hideChangeBinModal,
-  changeHolderBin,
-  checkCurrentUnFinishTask,
-})(PickOperationPage);
+export default compose(
+  connect(mapStateToProps, {
+    getStationDeviceList,
+    addHoldersToSetupWaitlist,
+    addBinToHolder,
+    unassignBinFromHolder,
+    hideChangeBinModal,
+    changeHolderBin,
+    checkCurrentUnFinishTask,
+  }),
+  withNamespaces(),
+)(PickOperationPage);

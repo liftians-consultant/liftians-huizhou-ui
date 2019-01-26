@@ -16,7 +16,7 @@ export const fetchTaskStatusFailureAction = () => ({
 });
 
 export const getTaskStatus = () => (dispatch, getState) => new Promise((resolve) => {
-  if (getState().status.taskStatusList) {
+  if (!_.isEmpty(getState().status.taskStatusList)) {
     resolve(true);
   }
 

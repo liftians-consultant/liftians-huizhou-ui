@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
+import { compose } from 'recompose';
+import { withNamespaces } from 'react-i18next';
 import { Segment, Grid, Button, Dimmer, Loader, Input } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
 
@@ -40,7 +42,7 @@ class ReplenishOperationPage extends Component {
       locationBarcode: '',
     },
     currentReplenishProduct: {
-      totalReplenishQuantity: 0,
+      quantity: 0,
     },
     currentHighlightBox: {
       row: 0,
@@ -85,21 +87,10 @@ class ReplenishOperationPage extends Component {
     super(props);
 
     // Setup Ref for input fields
-    this.scanBoxInputRef = React.createRef();
-    this.scanProductInputRef = React.createRef();
+    this.scanInputRef = React.createRef();
 
     // Bind the this context to the handler function
-    this.selectReplenishedAmount = this.selectReplenishedAmount.bind(this);
-    this.retrieveNextOrder = this.retrieveNextOrder.bind(this);
-    this.handleProductScanBtnClick = this.handleProductScanBtnClick.bind(this);
-    this.finishReplenish = this.finishReplenish.bind(this);
-    this.closeWrongBoxModal = this.closeWrongBoxModal.bind(this);
-    this.closeWrongProductModal = this.closeWrongProductModal.bind(this);
-    this.handleBoxScanKeyPress = this.handleBoxScanKeyPress.bind(this);
-    this.handleProductScanKeyPress = this.handleProductScanKeyPress.bind(this);
-    this.setFocusToInputManual = this.setFocusToInputManual.bind(this);
-    this.closeWarningModal = this.closeWarningModal.bind(this);
-    this.handleTaskFinishClose = this.handleTaskFinishClose.bind(this);
+    this.handleScanKeyPress = this.handleScanKeyPress.bind(this);
   }
 
   componentWillMount() {
@@ -182,7 +173,8 @@ class ReplenishOperationPage extends Component {
     let isReceive = false;
     this.productInterval = setInterval(() => {
       if (!isReceive) {
-        api.station.getReceiveProductInfo().then((res) => {
+        api.replenish.getReceiveProductInfo().then((res) => {
+          console.log('GET PRODUCT', res);
           if (res.success) {
             this.setState({
               taskStatus: res.data.taskProgress,
@@ -202,8 +194,8 @@ class ReplenishOperationPage extends Component {
         });
       } else {
         this.logInfo('STOP INTERVAL');
-        console.log(`[location] ${this.state.currentPickProduct.locationCode}`);
-        console.log(`[product] ${this.state.currentPickProduct.productBarCode}`);
+        console.log(`[location] ${this.state.currentReplenishProduct.locationCode}`);
+        console.log(`[product] ${this.state.currentReplenishProduct.productBarCode}`);
         this.getPodInfo();
         clearInterval(this.productInterval);
       }
@@ -228,7 +220,7 @@ class ReplenishOperationPage extends Component {
         scanType = null;
       }
 
-      api.pick.pushReceiveProcess(scanType, scannedValue).then((res) => {
+      api.replenish.pushReceiveProcess(scanType, scannedValue).then((res) => {
         console.log('code:', res);
         switch (res.code) {
           case status.FIRST_LOCATION_SCAN:
@@ -262,7 +254,9 @@ class ReplenishOperationPage extends Component {
 
   render() {
     const { podInfo, currentReplenishProduct, taskStatus,
-      warningMessage, openChangeLocationModal, currentHighlightBox } = this.state;
+      currentHighlightBox } = this.state;
+
+    const { t } = this.props;
 
     return (
       <div className="replenish-operation-page">
@@ -276,7 +270,7 @@ class ReplenishOperationPage extends Component {
                 podInfo={podInfo}
                 highlightBox={currentHighlightBox}
                 onShortageClicked={this.handleShortageClick}
-                showAdditionBtns
+                showAdditionBtns={false}
               />
             </Grid.Column>
 
@@ -307,7 +301,7 @@ class ReplenishOperationPage extends Component {
           </Grid.Row>
         </Grid>
 
-        <WarningModal
+        {/* <WarningModal
           open={this.state.openWrongProductModal}
           onClose={warningMessage.onCloseFunc.bind(this)} // eslint-disable-line
           headerText={warningMessage.headerText}
@@ -327,7 +321,7 @@ class ReplenishOperationPage extends Component {
           onClose={this.handleTaskFinishClose}
           headerText="Finished"
           contentText="Yay! All orders are finished"
-        />
+        /> */}
       </div>
     );
   }
@@ -337,15 +331,16 @@ ReplenishOperationPage.propTypes = {
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,
   }).isRequired,
-  stationId: PropTypes.string.isRequired,
 };
 
 function mapStateToProps(state) {
   return {
-    stationId: state.station.id,
   };
 }
 
-export default connect(mapStateToProps, {
-  checkCurrentUnFinishTask,
-})(ReplenishOperationPage);
+export default compose(
+  connect(mapStateToProps, {
+    checkCurrentUnFinishTask,
+  }),
+  withNamespaces(),
+)(ReplenishOperationPage);

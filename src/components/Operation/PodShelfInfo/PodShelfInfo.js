@@ -33,12 +33,13 @@ const PodShelfInfo = props => (
 PodShelfInfo.propTypes = {
   podInfo: PropTypes.object.isRequired,
   highlightBox: PropTypes.object.isRequired,
-  onShortageClicked: PropTypes.func.isRequired,
+  onShortageClicked: PropTypes.func,
   showAdditionBtns: PropTypes.bool,
 };
 
 PodShelfInfo.defaultProps = {
   showAdditionBtns: false,
+  onShortageClicked: () => {},
 };
 
 export default PodShelfInfo;

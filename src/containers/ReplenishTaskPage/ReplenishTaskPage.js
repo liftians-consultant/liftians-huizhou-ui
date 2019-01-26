@@ -89,9 +89,12 @@ class ReplenishTaskPage extends Component {
 
 
   componentWillMount() {
-    this.props.getTaskStatus();
     this.setStationTaskType();
     this.startStationOperationCall();
+
+    this.props.getTaskStatus().then(() => {
+      this.getStationUnfinsihedOrderList(1);
+    });
   }
 
   componentDidMount() {
@@ -170,9 +173,13 @@ class ReplenishTaskPage extends Component {
     api.replenish.getReplenishList(stationId, pageNum, this.pageSize).then((res) => {
       if (res.success) {
         // TODO: Also need to set pages
+        console.log('here', res.data);
+
+        const array = this.transformOrderRecord(res.data.list);
+        console.log(array);
         this.setState({
           tableLoading: false,
-          ordersList: this.transformOrderRecord(res.data.list),
+          ordersList: [...array],
         });
       }
     }).catch(() => {
