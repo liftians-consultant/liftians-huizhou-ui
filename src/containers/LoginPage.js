@@ -6,6 +6,7 @@ import { Grid, Image, Segment } from 'semantic-ui-react';
 import LoginForm from 'components/forms/LoginForm';
 import ServerSettingModal from 'components/common/ServerSettingModal/ServerSettingModal';
 import { login } from 'redux/actions/authAction';
+import { activateStation } from 'redux/actions/stationAction';
 
 import logo from 'assets/images/assembly_logo_trans.png';
 
@@ -20,9 +21,14 @@ class LoginPage extends Component {
   constructor() {
     super();
     this.handleSettingBtnClick = this.handleSettingBtnClick.bind(this);
+    this.handleAfterSubmit = this.handleAfterSubmit.bind(this);
   }
 
   submit = data => this.props.login(data);
+
+  handleAfterSubmit = () => {
+    this.props.activateStation(this.props.stationId, this.props.userId);
+  }
 
   handleSettingBtnClick = () => {
 
@@ -55,7 +61,10 @@ class LoginPage extends Component {
           <Grid.Column style={{ maxWidth: 450 }}>
             <Image src={logo} size="huge" centered />
             <Segment>
-              <LoginForm submit={this.submit} />
+              <LoginForm
+                submit={this.submit}
+                afterSubmit={this.handleAfterSubmit}
+              />
             </Segment>
           </Grid.Column>
         </Grid>
@@ -75,4 +84,14 @@ LoginPage.propTypes = {
   login: PropTypes.func.isRequired,
 };
 
-export default connect(null, { login })(LoginPage);
+function mapStateToProps(state) {
+  return {
+    userId: state.user.userId,
+    stationId: state.station.id,
+  };
+}
+
+export default connect(mapStateToProps, {
+  login,
+  activateStation,
+})(LoginPage);

@@ -10,7 +10,6 @@ import * as log4js from 'log4js2';
 import { AjaxAppenderProvider } from 'utils/AjaxAppender';
 import appConfig from 'services/AppConfig';
 
-import ETagService from 'services/ETagService';
 import MenuButton from 'components/common/MenuButton/MenuButton';
 import * as actions from 'redux/actions/authAction';
 import { getUserInfoById } from 'redux/actions/userAction';
@@ -29,7 +28,7 @@ class HomePage extends Component {
 
   componentWillMount() {
     // this.props.getUserInfoById(this.props.userId).then(() => {
-    this.props.activateStation(this.props.stationId, this.props.userId);
+    // this.props.activateStation(this.props.stationId, this.props.userId);
     this.checkCurrentUnFinishTaskCall();
     // });
 

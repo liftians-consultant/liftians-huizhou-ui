@@ -63,45 +63,55 @@ class SideNavigation extends Component {
   }
 
   handleLogoutBtnClicked() {
-    api.station.checkCurrentUnFinishTask(this.stationId).then((res) => {
-      if (res) {
-        const unfinishedTask = res.filter(o => o.cnt > 0);
-        if (unfinishedTask.length > 0) { // have remainging task
-          toast.error('Unable to log out, please finish all the task first!');
-        } else { // no more task
-          // stop pick operation
-          api.station.stopStationOperation(this.stationId, this.props.username, 'P').then((response) => {
-            if (response.data) {
-              console.log('[STOP STATION OPERATION] SUCCESS');
-              api.station.deactivateStation(this.stationId).then(() => {
-                console.log('[DEACTIVATE STATION] Station Deactivated');
-                if (res.success) {
-                  // this.props.unlinkAllBinFromHolder(this.stationId).then((result) => {
-                  //   if (result) {
-                  //     toast.info('All bin unlinked from holder');
-                  //   } else {
-                  //     toast.warn('Bin unlink from holder failed');
-                  //   }
-                  // });
-                  this.props.logout().then((result) => {
-                    if (result) {
-                      toast.success('Successfully logged out');
-                    }
-                  });
-                } else {
-                  toast.error('Error while deactivating station');
-                }
-              }).catch(() => {
-                toast.error('Server Error while deactivating station');
-                console.log('[ERROR] error while deactivating station');
-              });
-            } else {
-              toast.error('Error while stopping pick operation');
-            }
-          });
-        }
+    api.user.logout().then((res) => {
+      if (res.success && res.data === 1) {
+        this.props.logout().then((result) => {
+          if (result) {
+            toast.success('Successfully logged out');
+          }
+        });
       }
     });
+
+    // api.station.checkCurrentUnFinishTask(this.stationId).then((res) => {
+    //   if (res) {
+    //     const unfinishedTask = res.filter(o => o.cnt > 0);
+    //     if (unfinishedTask.length > 0) { // have remainging task
+    //       toast.error('Unable to log out, please finish all the task first!');
+    //     } else { // no more task
+    //       // stop pick operation
+    //       api.station.stopStationOperation(this.stationId, this.props.username, 'P').then((response) => {
+    //         if (response.data) {
+    //           console.log('[STOP STATION OPERATION] SUCCESS');
+    //           api.station.deactivateStation(this.stationId).then(() => {
+    //             console.log('[DEACTIVATE STATION] Station Deactivated');
+    //             if (res.success) {
+    //               // this.props.unlinkAllBinFromHolder(this.stationId).then((result) => {
+    //               //   if (result) {
+    //               //     toast.info('All bin unlinked from holder');
+    //               //   } else {
+    //               //     toast.warn('Bin unlink from holder failed');
+    //               //   }
+    //               // });
+    //               this.props.logout().then((result) => {
+    //                 if (result) {
+    //                   toast.success('Successfully logged out');
+    //                 }
+    //               });
+    //             } else {
+    //               toast.error('Error while deactivating station');
+    //             }
+    //           }).catch(() => {
+    //             toast.error('Server Error while deactivating station');
+    //             console.log('[ERROR] error while deactivating station');
+    //           });
+    //         } else {
+    //           toast.error('Error while stopping pick operation');
+    //         }
+    //       });
+    //     }
+    //   }
+    // });
   }
 
   handleChangeBinBtnClicked() {
@@ -172,7 +182,7 @@ SideNavigation.propTypes = {
     push: PropTypes.func.isRequired,
   }).isRequired,
   logout: PropTypes.func.isRequired,
-  stationId: PropTypes.string.isRequired,
+  // stationId: PropTypes.string.isRequired,
   taskType: PropTypes.oneOf(['R', 'P', 'U']).isRequired,
   location: PropTypes.object.isRequired,
 };
