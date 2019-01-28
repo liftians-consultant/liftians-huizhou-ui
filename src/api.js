@@ -130,7 +130,7 @@ const station = {
   // }),
 
   getStationProductInfo: () => wmsRequest('GET_CURRENT_PRODUCT_INFO')
-    .then(res => parseResult(res, ['13'])),
+    .then(res => parseResult(res, ['13', '14'])),
 
   // getStationProductInfo: () => Promise.resolve({
   //   success: true,

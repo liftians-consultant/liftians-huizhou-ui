@@ -33,9 +33,9 @@ const LOCATION_TYPE = 0;
 const PRODUCT_TYPE = 1;
 
 const status = {
-  FIRST_LOCATION_SCAN: '20',
-  PRODUCT_SCAN: '21',
-  SECOND_LOCATION_SCAN: '22',
+  FIRST_LOCATION_SCAN: '21',
+  PRODUCT_SCAN: '22',
+  SECOND_LOCATION_SCAN: '1',
 };
 
 const scanMessage = {
@@ -60,11 +60,9 @@ class PickOperationPage extends Component {
       column: 0,
     },
     currentBinColor: '',
-    orderList: [],
     pickedAmount: 0,
     loading: true,
     barcode: '',
-    showBox: false,
     openWrongProductModal: false,
     openShortageConfirmModal: false,
     warningMessage: '',
@@ -203,7 +201,6 @@ class PickOperationPage extends Component {
                 column: res.data.boxId,
               },
               currentBinColor: res.data.binColor,
-              showBox: false,
               stillTask: res.data.stillTask,
             }, () => {
               isReceive = true;
@@ -248,30 +245,25 @@ class PickOperationPage extends Component {
 
       api.pick.pushDeliveryProcess(scanType, scannedValue).then((res) => {
         console.log('code:', res);
-        switch (res.code) {
-          case status.FIRST_LOCATION_SCAN:
+
+        if (!res.success) {
+          if (res.code === status.FIRST_LOCATION_SCAN) {
             toast.success('Correct Location');
             this.setState({ taskStatus: taskStatus + 1 });
-            break;
-          case status.PRODUCT_SCAN:
+          } else if (res.code === status.PRODUCT_SCAN) {
             toast.success('Correct Product');
             this.setState({
               taskStatus: taskStatus + 1,
-              showBox: true,
             });
-            break;
-          case status.SECOND_LOCATION_SCAN:
-            toast.success('Correct Location');
-            this.setState({ showBox: false });
-            if (this.state.stillTask === 0) {
-              toast.success('All Task Finished');
-              clearInterval(this.productInterval);
-              this.props.history.push('/pick-task');
-            }
-            this.getProductInfo();
-            break;
-          default:
-            break;
+          }
+        } else if (res.success && res.data.botLeave) {
+          toast.success('Correct Location');
+          if (this.state.stillTask === 0) {
+            toast.success('All Task Finished');
+            clearInterval(this.productInterval);
+            this.props.history.push('/pick-task');
+          }
+          this.getProductInfo();
         }
       });
 
@@ -307,7 +299,7 @@ class PickOperationPage extends Component {
   }
 
   render() {
-    const { warningMessage, podInfo, currentPickProduct, pickedAmount, showBox,
+    const { warningMessage, podInfo, currentPickProduct, pickedAmount,
       openWrongProductModal, barcode,
       currentHighlightBox, currentBinColor, taskStatus,
     } = this.state;
@@ -317,7 +309,7 @@ class PickOperationPage extends Component {
     return (
       <div className="pick-operation-page">
         <Dimmer active={this.state.loading}>
-          <Loader content="Waiting for pod..." indeterminate size="massive" />
+          <Loader content={t('operation.waitingForPod')} indeterminate size="massive" />
         </Dimmer>
         <Grid>
           <Grid.Row>
@@ -336,7 +328,7 @@ class PickOperationPage extends Component {
                   product={currentPickProduct}
                   amount={currentPickProduct.quantity - pickedAmount}
                   currentBarcode={currentPickProduct.productBarCode}
-                  showBox={showBox}
+                  showBox={taskStatus === 2}
                   unit={currentPickProduct.unit}
                   binColor={currentBinColor}
                 />
@@ -414,13 +406,14 @@ PickOperationPage.propTypes = {
   }).isRequired,
 };
 
-function mapStateToProps(state) {
-  return {
+// function mapStateToProps(state) {
+//   return {
 
-  };
-}
+//   };
+// }
+
 export default compose(
-  connect(mapStateToProps, {
+  connect(null, {
     getStationDeviceList,
     addHoldersToSetupWaitlist,
     addBinToHolder,
