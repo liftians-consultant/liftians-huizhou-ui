@@ -63,11 +63,16 @@ class SideNavigation extends Component {
   }
 
   handleLogoutBtnClicked() {
-    api.user.logout().then((res) => {
-      if (res.success && res.data === 1) {
-        this.props.logout().then((result) => {
-          if (result) {
-            toast.success('Successfully logged out');
+    api.station.deactivateStation().then((result) => {
+      if (result.success) {
+        api.user.logout().then((res) => {
+          if (res.success) {
+            this.props.logout().then((response) => {
+              if (response) {
+                // this.props.history.replace('/login');
+                toast.success('Successfully logged out');
+              }
+            });
           }
         });
       }
@@ -180,6 +185,7 @@ class SideNavigation extends Component {
 SideNavigation.propTypes = {
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,
+    replace: PropTypes.func.isRequired,
   }).isRequired,
   logout: PropTypes.func.isRequired,
   // stationId: PropTypes.string.isRequired,
