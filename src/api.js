@@ -200,8 +200,9 @@ const pick = {
   //   },
   // }),
 
-  getStationOrderList: (stationId, pageNum, pageSize) => wmsRequest('GET_STATION_ORDER_LIST', {
+  getStationOrderList: (stationId, taskStat, pageNum, pageSize) => wmsRequest('GET_ORDER_LIST', {
     stationId,
+    taskStat,
     pageNum,
     pageSize,
   }).then(res => parseResult(res)),

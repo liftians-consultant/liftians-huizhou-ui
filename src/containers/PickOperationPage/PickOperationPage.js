@@ -318,7 +318,7 @@ class PickOperationPage extends Component {
                 podInfo={podInfo}
                 highlightBox={currentHighlightBox}
                 onShortageClicked={this.handleShortageClick}
-                showAdditionBtns
+                showAdditionBtns={false}
               />
             </Grid.Column>
 
