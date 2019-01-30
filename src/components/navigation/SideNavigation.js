@@ -10,7 +10,7 @@ import { withNamespaces } from 'react-i18next';
 import api from 'api';
 import * as actions from 'redux/actions/authAction';
 import appConfig from 'services/AppConfig';
-import { checkCurrentUnFinishTask } from 'redux/actions/stationAction';
+import { deactivateStation, checkCurrentUnFinishTask } from 'redux/actions/stationAction';
 import { showChangeBinModal, unlinkAllBinFromHolder } from 'redux/actions/operationAction';
 import './SideNavigation.css';
 
@@ -63,13 +63,12 @@ class SideNavigation extends Component {
   }
 
   handleLogoutBtnClicked() {
-    api.station.deactivateStation().then((result) => {
-      if (result.success) {
+    this.props.deactivateStation().then((result) => {
+      if (result) {
         api.user.logout().then((res) => {
           if (res.success) {
             this.props.logout().then((response) => {
               if (response) {
-                // this.props.history.replace('/login');
                 toast.success('Successfully logged out');
               }
             });
@@ -136,7 +135,7 @@ class SideNavigation extends Component {
   }
 
   render() {
-    const { taskType, location, t } = this.props;
+    const { username, taskType, location, t } = this.props;
     const currentPath = location.pathname;
     const operationUrl = taskType === 'R' ? '/replenish-operation' : '/operation';
     const taskListUrl = taskType === 'R' ? '/replenish-task' : '/pick-task';
@@ -149,6 +148,8 @@ class SideNavigation extends Component {
             <span>
               {t('station.name', { id: this.stationId })}
             </span>
+            <br />
+            <span>{username}</span>
           </div>
           <div className="nav-item-container">
             <Link to="/" replace={currentPath === '/'}>
@@ -207,6 +208,7 @@ const mapDispatchToProps = {
   checkCurrentUnFinishTask,
   showChangeBinModal,
   unlinkAllBinFromHolder,
+  deactivateStation,
 };
 
 export default compose(

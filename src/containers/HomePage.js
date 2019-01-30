@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withNamespaces } from 'react-i18next';
 import { Grid, Dimmer, Loader } from 'semantic-ui-react';
+import { toast } from 'react-toastify';
 
 import * as log4js from 'log4js2';
 // import { AjaxAppenderProvider } from '@norauto/log4js2-ajax-appender';
@@ -28,8 +29,13 @@ class HomePage extends Component {
 
   componentWillMount() {
     // this.props.getUserInfoById(this.props.userId).then(() => {
-    // this.props.activateStation(this.props.stationId, this.props.userId);
-    this.checkCurrentUnFinishTaskCall();
+    this.props.activateStation(this.props.stationId, this.props.userId).then((res) => {
+      if (res) {
+        this.checkCurrentUnFinishTaskCall();
+      } else {
+        toast.error('Failed to activate station');
+      }
+    });
     // });
 
     // ETagService.turnEndLightOffById(0);

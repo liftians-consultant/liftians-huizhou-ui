@@ -24,10 +24,7 @@ class LoginForm extends React.Component {
       this.setState({ loading: true });
       this.props
         .submit(this.state.data)
-        .then((res) => {
-          if (res === true) {
-            this.props.afterSubmit();
-          }
+        .then(() => {
           this.setState({ loading: false });
         }).catch((err) => {
           console.log(err);
@@ -87,13 +84,8 @@ class LoginForm extends React.Component {
   }
 }
 
-LoginForm.defaultProps = {
-  afterSubmit: () => {},
-};
-
 LoginForm.propTypes = {
   submit: PropTypes.func.isRequired,
-  afterSubmit: PropTypes.func,
 };
 
 export default LoginForm;

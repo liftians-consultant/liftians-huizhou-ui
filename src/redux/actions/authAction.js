@@ -21,6 +21,7 @@ export const login = credentials => dispatch => api.user.login(credentials)
         username: credentials.username,
         userId: res.data.userId,
       };
+
       dispatch(userLoggedIn(user));
       return true;
     }
