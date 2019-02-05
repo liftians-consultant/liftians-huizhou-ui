@@ -1,19 +1,20 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Grid, Button, Input, Icon } from 'semantic-ui-react';
-import { toast } from 'react-toastify';
 import { compose } from 'recompose';
 import { withNamespaces } from 'react-i18next';
+import { Grid, Button, Input, Icon } from 'semantic-ui-react';
+import { toast } from 'react-toastify';
+import _ from 'lodash';
 
 import api from 'api';
 import OrderListTable from 'components/common/OrderListTable/OrderListTable';
 import OperationTaskMenu from 'components/OperationTaskMenu/OperationTaskMenu';
-import ConfirmDialogModal from 'components/common/ConfirmDialogModal/ConfirmDialogModal';
-import PickOrderTableColumns from 'models/PickOrderTableModel';
+import InputDialogModal from 'components/common/InputDialogModal';
 
 import { setStationTaskType } from 'redux/actions/stationAction';
-import { getTaskStatus } from 'redux/actions/statusAction';
+import { getTaskStatus, getCancelReasonList } from 'redux/actions/statusAction';
+import { resetTaskPage, setRemoveDialog } from 'redux/actions/pickTaskAction';
 
 import './ReplenishTaskPage.css';
 import * as log4js from 'log4js2';
@@ -28,10 +29,13 @@ class ReplenishTaskPage extends Component {
   deleteIndex = 0;
 
   taskTypeOption = [
-    { key: 1, text: 'New', index: 1, value: '0' },
-    // { key: 2, text: 'In Progress', index: 2, value: '1' },
-    // { key: 3, text: 'Complete', index: 3, value: '5' },
+    { key: 1, tranlationKey: 'label.unprocessed', index: 1, value: '0' },
+    { key: 2, tranlationKey: 'label.inProgess', index: 2, value: '1' },
+    { key: 3, tranlationKey: 'label.finished', index: 3, value: '5' },
+    { key: 4, tranlationKey: 'label.cancelled', index: 4, value: '-1' },
   ];
+
+  isLoaded = false;
 
   state = {
     activeTaskType: '0',
@@ -39,43 +43,44 @@ class ReplenishTaskPage extends Component {
     inputLoading: false,
     tableLoading: false,
     pages: 1,
-    openRemoveConfirm: false,
   };
 
   NewOrderTableColumn = [
     {
-      Header: 'Barcode',
+      key: 'label.barcode',
       accessor: 'barCode',
     }, {
-      Header: 'Product',
-      accessor: 'productId',
+      key: 'label.productBarcode',
+      accessor: 'productBarCode',
       maxWidth: 100,
     }, {
-      Header: 'Quantity',
+      key: 'label.quantity',
       accessor: 'quantity',
       maxWidth: 100,
     }, {
-      Header: 'Unit',
+      key: 'label.unit',
       accessor: 'unit',
       maxWidth: 80,
     }, {
-      Header: 'Batch',
+      key: 'label.batch',
       accessor: 'batch',
       maxWidth: 80,
     }, {
-      Header: 'Manufacturer',
-      accessor: 'manufacturer',
+      key: 'label.manufacturer',
+      accessor: 'manufacturerName',
     }, {
-      Header: 'Status',
+      key: 'label.status',
       accessor: 'statusName',
     }, {
-      Header: 'Remove',
+      key: 'label.remove',
       Cell: row => (
         <Icon name="delete" size="big" onClick={() => this.handleRemoveOrder(row.index)} />
       ),
       maxWidth: 100,
     },
   ];
+
+  OrdersTableColumn = [];
 
   constructor() {
     super();
@@ -84,16 +89,22 @@ class ReplenishTaskPage extends Component {
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleFetchTableData = this.handleFetchTableData.bind(this);
     this.handleStartBtn = this.handleStartBtn.bind(this);
-    this.handleRemoveConfirmAction = this.handleRemoveConfirmAction.bind(this);
+    this.getStationOrderList = this.getStationOrderList.bind(this);
+    this.handleRemoveScanSubmit = this.handleRemoveScanSubmit.bind(this);
   }
 
 
   componentWillMount() {
+    this.translateTableColumn();
+
     this.setStationTaskType();
     this.startStationOperationCall();
 
+    this.props.getCancelReasonList();
+
     this.props.getTaskStatus().then(() => {
-      this.getStationUnfinsihedOrderList(1);
+      this.getStationOrderList([1], 1);
+      this.loaded = true;
     });
   }
 
@@ -105,12 +116,35 @@ class ReplenishTaskPage extends Component {
     this.scanRef.current.focus();
   }
 
+  translateTableColumn = () => {
+    const { t } = this.props;
+    const newColumn = this.NewOrderTableColumn.map((obj) => {
+      obj.Header = t(obj.key);
+      return obj;
+    });
+
+    const newOptions = this.taskTypeOption.map((obj) => {
+      obj.text = t(obj.tranlationKey);
+      return obj;
+    });
+
+    this.NewOrderTableColumn = [...newColumn];
+    newColumn.pop();
+    this.OrdersTableColumn = newColumn;
+
+    this.taskTypeOption = [...newOptions];
+  }
+
   transformOrderRecord(orderList) {
     const { taskStatusList } = this.props;
-    return orderList.map((obj) => {
+
+    const array = orderList.map((obj) => {
+      if (!taskStatusList[obj.stat]) return obj;
       obj.statusName = taskStatusList[obj.stat].name;
       return obj;
     });
+
+    return array;
   }
 
   preProcessInputValue(value) {
@@ -123,7 +157,18 @@ class ReplenishTaskPage extends Component {
   }
 
   handleFetchTableData(state) {
-    this.getStationUnfinsihedOrderList(state.page);
+    if (!this.isLoaded) return;
+
+    const { activeTaskType } = this.state;
+    if (activeTaskType === '0') {
+      this.getStationOrderList([1], state.page);
+    } else if (activeTaskType === '1') {
+      this.getStationOrderList([2, 3, 4], state.page);
+    } else if (activeTaskType === '5') {
+      this.getStationOrderList([5], state.page);
+    } else if (activeTaskType === '-1') {
+      this.getStationOrderList([-1], state.page);
+    }
   }
 
   handleInputChange(e) {
@@ -134,26 +179,15 @@ class ReplenishTaskPage extends Component {
         return;
       }
 
-      this.setState({ inputLoading: true });
+      this.setState({
+        inputLoading: true,
+        activeTaskType: '0',
+      });
 
       api.replenish.retreiveReceiveFromAsm(e.target.value).then((res) => {
         this.setState({ inputLoading: false });
         if (res.success) {
-          const { stationId } = this.props;
-          this.setState({ tableLoading: true });
-
-          // get unstarted order
-          api.replenish.getReplenishList(stationId, 1, this.pageSize).then((result) => {
-            if (result.success) {
-              // TODO: Also need to set pages
-              this.setState({
-                tableLoading: false,
-                ordersList: this.transformOrderRecord(result.data.list),
-              });
-            }
-          }).catch(() => {
-            this.setState({ tableLoading: false });
-          });
+          this.getStationOrderList([1], 1);
 
           this.scanRef.current.inputRef.value = '';
           this.scanRef.current.focus();
@@ -165,21 +199,19 @@ class ReplenishTaskPage extends Component {
     }
   }
 
-  getStationUnfinsihedOrderList(pageNum) {
+  getStationOrderList(taskTypeList, pageNum, callback = () => {}) {
     const { stationId } = this.props;
     this.setState({ tableLoading: true });
 
     // get unstarted order
-    api.replenish.getReplenishList(stationId, pageNum, this.pageSize).then((res) => {
+    api.replenish.getStationReplenishList(stationId, taskTypeList, pageNum, this.pageSize).then((res) => {
       if (res.success) {
         // TODO: Also need to set pages
-        console.log('here', res.data);
-
-        const array = this.transformOrderRecord(res.data.list);
-        console.log(array);
         this.setState({
           tableLoading: false,
-          ordersList: [...array],
+          ordersList: this.transformOrderRecord(res.data.list),
+        }, () => {
+          callback(res);
         });
       }
     }).catch(() => {
@@ -206,11 +238,13 @@ class ReplenishTaskPage extends Component {
   handleTaskChange = (e, { value }) => {
     this.setState({ activeTaskType: value }, () => {
       if (value === '0') {
-        this.setState(prevState => ({ ordersList: prevState.newOrdersList }));
+        this.getStationOrderList([1], 1);
       } else if (value === '1') {
-        this.getStationUnfinsihedOrderList(1);
+        this.getStationOrderList([2, 3, 4], 1);
       } else if (value === '5') {
-        // ignore now
+        this.getStationOrderList([5], 1);
+      } else if (value === '-1') {
+        this.getStationOrderList([-1], 1);
       }
     });
   }
@@ -222,8 +256,6 @@ class ReplenishTaskPage extends Component {
     api.replenish.startReceiveTask(barcodeList).then((res) => {
       if (res.success) {
         if (res.data.success === 0) {
-          // res.data.errorDesc -> object
-          // TODO: print all error
           toast.error('Cant start operation. Invalid data');
           return;
         }
@@ -234,24 +266,26 @@ class ReplenishTaskPage extends Component {
 
   handleRemoveOrder = (index) => {
     this.deleteIndex = index;
-    this.setState({ openRemoveConfirm: true });
+    this.props.setRemoveDialog(true);
   }
 
-  handleRemoveConfirmAction(result) {
-    if (result) {
-      const { newOrdersList } = this.state;
-      newOrdersList.splice(this.deleteIndex, 1);
-      this.setState({ newOrdersList: [...newOrdersList] });
+  handleRemoveScanSubmit = (cancelCodeStr) => {
+    // validate cancel code
+    if (_.has(this.props.cancelReasonList, cancelCodeStr)) {
+      toast.error('This code does not exist. Please try again');
+      return;
     }
-    this.setState({ openRemoveConfirm: false });
+
+    this.getStationOrderList([1], 1);
+    this.props.setRemoveDialog(false);
   }
 
   render() {
     const {
       tableLoading, ordersList, inputLoading, pages, activeTaskType,
-      openRemoveConfirm,
+      cancelErrorMessage,
     } = this.state;
-    const { t } = this.props;
+    const { t, openRemoveModal } = this.props;
 
     return (
       <div className="ui replenish-task-page-container">
@@ -269,21 +303,17 @@ class ReplenishTaskPage extends Component {
             <Grid.Column>
               <div className="orderlist-table-container">
                 { activeTaskType === '0' ? (
-                  // <OrderListTable
-                  //   listData={newOrdersList}
-                  //   loading={tableLoading}
-                  //   columns={this.NewOrderTableColumn}
-                  // />
                   <OrderListTable
                     listData={ordersList}
                     loading={tableLoading}
                     columns={this.NewOrderTableColumn}
+                    pages={pages}
                   />
                 ) : (
                   <OrderListTable
                     listData={ordersList}
                     loading={tableLoading}
-                    columns={PickOrderTableColumns}
+                    columns={this.OrdersTableColumn}
                     onFetchData={this.handleFetchTableData}
                     pages={pages}
                   />
@@ -321,12 +351,13 @@ class ReplenishTaskPage extends Component {
           </Grid.Row>
         </Grid>
 
-        <ConfirmDialogModal
-          size="mini"
-          open={openRemoveConfirm}
-          close={this.handleRemoveConfirmAction}
-          header="Remove Order"
-          content="Are you sure you want to remove this order?"
+        <InputDialogModal
+          open={openRemoveModal}
+          headerText="Remove Order"
+          onSubmit={this.handleRemoveScanSubmit}
+          errorMessage={cancelErrorMessage}
+          inputType="text"
+          onClose={() => this.props.setRemoveDialog(false)}
         />
       </div>
     );
@@ -345,6 +376,7 @@ function mapStateToProps(state) {
     username: state.user.username,
     stationId: state.station.id,
     taskStatusList: state.status.taskStatusList,
+    openRemoveModal: state.pickTask.openRemoveDialog,
   };
 }
 
@@ -352,6 +384,9 @@ export default compose(
   connect(mapStateToProps, {
     setStationTaskType,
     getTaskStatus,
+    getCancelReasonList,
+    resetTaskPage,
+    setRemoveDialog,
   }),
   withNamespaces(),
 )(ReplenishTaskPage);

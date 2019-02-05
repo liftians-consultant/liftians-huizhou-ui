@@ -1,5 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { compose } from 'recompose';
+import { withNamespaces } from 'react-i18next';
 import { Form, Button, Message } from 'semantic-ui-react';
 import InlineError from '../messages/InlineError';
 
@@ -30,7 +32,7 @@ class LoginForm extends React.Component {
           console.log(err);
           let message = 'Login Error';
           if (err.message.indexOf('timeout') !== -1) {
-            message = 'Connection Timeout: Please make sure you have the correct server configuration.';
+            message = this.props.t('message.connectionTimeout');
           }
           this.setState({ errors: { global: message }, loading: false });
         });
@@ -39,18 +41,19 @@ class LoginForm extends React.Component {
 
   validate = (data) => {
     const errors = {};
-    if (!data.password) errors.password = "Can't be blank";
+    if (!data.password) errors.password = this.props.t('message.cannotBeEmpty');
     return errors;
   };
 
   render() {
     const { data, errors, loading } = this.state;
+    const { t } = this.props;
 
     return (
       <Form onSubmit={this.onSubmit} loading={loading} size="large">
         {errors.global && (
           <Message negative>
-            <Message.Header>Something went wrong</Message.Header>
+            <Message.Header>{t('message.somethingWentWrong')}</Message.Header>
             <p>{errors.global}</p>
           </Message>
         )}
@@ -60,7 +63,7 @@ class LoginForm extends React.Component {
             type="text"
             id="username"
             name="username"
-            placeholder="Your username"
+            placeholder={t('placeholder.username')}
             value={data.username}
             onChange={this.onChange}
           />
@@ -72,13 +75,13 @@ class LoginForm extends React.Component {
             type="password"
             id="password"
             name="password"
-            placeholder="Your password"
+            placeholder={t('placeholder.password')}
             value={data.password}
             onChange={this.onChange}
           />
           {errors.password && <InlineError text={errors.password} />}
         </Form.Field>
-        <Button primary>Login</Button>
+        <Button primary>{t('label.login')}</Button>
       </Form>
     );
   }
@@ -88,4 +91,6 @@ LoginForm.propTypes = {
   submit: PropTypes.func.isRequired,
 };
 
-export default LoginForm;
+export default compose(
+  withNamespaces(),
+)(LoginForm);

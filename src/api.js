@@ -1,7 +1,7 @@
 import axios from 'axios';
 import appConfig from 'services/AppConfig';
 import * as apiKey from 'apiKey.json';
-import { parseJSON, parseResult } from 'utils/utils';
+import { parseResult } from 'utils/utils';
 
 const uuidv4 = require('uuid/v4');
 
@@ -21,13 +21,13 @@ function loginRequest(credentials) {
   }, { timeout: 6000 });
 }
 
-function wmsRequest(messageType, data) {
+function wmsRequest(messageType, data, param = {}) {
   return axios.post(`${appConfig.getApiUrl()}/wms/api`, {
     messageType,
     data,
     msgId: uuidv4(),
     token: localStorage.liftiansJWT,
-  });
+  }, param);
 }
 
 const user = {
@@ -44,6 +44,9 @@ const user = {
 const status = {
   getTaskStatus: () => wmsRequest('STAT_TYPE', 'TaskStat')
     .then(res => parseResult(res)),
+
+  getCancelReason: () => wmsRequest('STAT_TYPE', 'TaskStat')
+    .then(res => parseResult(res)),
 };
 
 const station = {
@@ -55,7 +58,7 @@ const station = {
     .then(res => parseResult(res)),
 
   checkCurrentUnFinishTask: stationId => wmsRequest('CURRENT_UNFINISH_TASK', stationId)
-    .then(res => parseJSON(res)),
+    .then(res => parseResult(res)),
 
   getStationPodLayout: () => wmsRequest('GET_CURRENT_POD_LAYOUT')
     .then(res => parseResult(res)),
@@ -179,27 +182,6 @@ const pick = {
   retrieveOrderFromAsm: barCode => wmsRequest('GET_ORDER_LABEL', barCode)
     .then(res => parseResult(res)),
 
-  // retrieveOrderFromAsm: barCode => Promise.resolve({
-  //   success: true,
-  //   data: {
-  //     stat: 0,
-  //     quantity: 1.00456,
-  //     productId: 4,
-  //     productBarCode: 'D8V203AC2B',
-  //     batch: '005',
-  //     updateTime: 1546528763387,
-  //     warehouse: 'H180',
-  //     barCode: '86566337' + (Math.floor(Math.random() * 10) + 1),
-  //     manufacturer: 2,
-  //     unit: 'GM',
-  //     areaId: 0,
-  //     createTime: 1546528763387,
-  //     plant: 'HT001',
-  //     id: 0,
-  //     locationCode: '1000023061',
-  //   },
-  // }),
-
   getStationOrderList: (stationId, taskStat, pageNum, pageSize) => wmsRequest('GET_ORDER_LIST', {
     stationId,
     taskStat,
@@ -207,7 +189,7 @@ const pick = {
     pageSize,
   }).then(res => parseResult(res)),
 
-  startPickTask: orderList => wmsRequest('START_DELIVERY_TASK', orderList)
+  startPickTask: orderList => wmsRequest('START_DELIVERY_TASK', orderList, { timeout: 60000 })
     .then(res => parseResult(res)),
 
   pushDeliveryProcess: (type, barCode) => wmsRequest('PUSH_DELIVERY_PROCESS', {
@@ -229,101 +211,18 @@ const replenish = {
   retreiveReceiveFromAsm: barCode => wmsRequest('GET_RECEIVE_LABEL', barCode)
     .then(res => parseResult(res)),
 
-  // retreiveReceiveFromAsm: () => Promise.resolve({
-  //   success: true,
-  //   data: {
-  //     stat: 0,
-  //     quantity: 1.00456,
-  //     productId: 4,
-  //     productBarCode: 'D8V203AC2B',
-  //     batch: '005',
-  //     updateTime: 1546528763387,
-  //     warehouse: 'H180',
-  //     barCode: '8656657',
-  //     manufacturer: 2,
-  //     unit: 'GM',
-  //     areaId: 0,
-  //     createTime: 1546528763387,
-  //     plant: 'HT001',
-  //     id: 0,
-  //     locationCode: '1000023061',
-  //   }
-  // }),
-
-  getReplenishList: (stationId, pageNum, pageSize) => wmsRequest('GET_REPLENISH_LIST', {
+  getStationReplenishList: (stationId, taskStat, pageNum, pageSize) => wmsRequest('GET_REPLENISH_LIST', {
     stationId,
+    taskStat,
     pageNum,
     pageSize,
   }).then(res => parseResult(res)),
 
-  // getReplenishList: () => Promise.resolve({
-  //   success: true,
-  //   data: {
-  //     pageNum: 100,
-  //     list: [{
-  //       stat: 1,
-  //       quantity: 1.00456,
-  //       productId: 4,
-  //       productBarCode: 'D8V203AC2B',
-  //       batch: '005',
-  //       updateTime: 1546528763387,
-  //       warehouse: 'H180',
-  //       barCode: '8656657',
-  //       manufacturer: 2,
-  //       unit: 'GM',
-  //       areaId: 0,
-  //       createTime: 1546528763387,
-  //       plant: 'HT001',
-  //       id: 0,
-  //       locationCode: '1000023061',
-  //       userId: 0,
-  //     }],
-  //   },
-  // }),
-
   startReceiveTask: receiveList => wmsRequest('START_RECEIVE_TASK', receiveList)
     .then(res => parseResult(res)),
 
-  // startReceiveTask: () => Promise.resolve({
-  //   success: true,
-  //   data: {
-  //     success: 1,
-  //     error: 0,
-  //   },
-  // }),
-
-
   getReceiveProductInfo: () => wmsRequest('GET_RECEIVE_PRODUCT_INFO')
     .then(res => parseResult(res)),
-
-  // getReceiveProductInfo: () => Promise.resolve({
-  //   success: true,
-  //   data: {
-  //     podId: 10,
-  //     boxId: 1,
-  //     podSide: 1,
-  //     shelfId: 2,
-  //     stilltask: 0,
-  //     deliveryTask: {
-  //       stat: 0,
-  //       quantity: 1.00456,
-  //       productId: 4,
-  //       productBarCode: 'D8V203AC2B',
-  //       batch: '005',
-  //       updateTime: 1546528763387,
-  //       warehouse: 'H180',
-  //       barCode: '8656657',
-  //       manufacturer: 2,
-  //       unit: 'GM',
-  //       areaId: 0,
-  //       createTime: 1546528763387,
-  //       plant: 'HT001',
-  //       id: 0,
-  //       locationCode: '1000023061',
-  //       userId: 0,
-  //     },
-  //   },
-  // }),
 
   pushReceiveProcess: (type, barCode) => wmsRequest('PUSH_RECEIVE_PROCESS', {
     type,

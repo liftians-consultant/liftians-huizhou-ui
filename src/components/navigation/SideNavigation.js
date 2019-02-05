@@ -76,46 +76,6 @@ class SideNavigation extends Component {
         });
       }
     });
-
-    // api.station.checkCurrentUnFinishTask(this.stationId).then((res) => {
-    //   if (res) {
-    //     const unfinishedTask = res.filter(o => o.cnt > 0);
-    //     if (unfinishedTask.length > 0) { // have remainging task
-    //       toast.error('Unable to log out, please finish all the task first!');
-    //     } else { // no more task
-    //       // stop pick operation
-    //       api.station.stopStationOperation(this.stationId, this.props.username, 'P').then((response) => {
-    //         if (response.data) {
-    //           console.log('[STOP STATION OPERATION] SUCCESS');
-    //           api.station.deactivateStation(this.stationId).then(() => {
-    //             console.log('[DEACTIVATE STATION] Station Deactivated');
-    //             if (res.success) {
-    //               // this.props.unlinkAllBinFromHolder(this.stationId).then((result) => {
-    //               //   if (result) {
-    //               //     toast.info('All bin unlinked from holder');
-    //               //   } else {
-    //               //     toast.warn('Bin unlink from holder failed');
-    //               //   }
-    //               // });
-    //               this.props.logout().then((result) => {
-    //                 if (result) {
-    //                   toast.success('Successfully logged out');
-    //                 }
-    //               });
-    //             } else {
-    //               toast.error('Error while deactivating station');
-    //             }
-    //           }).catch(() => {
-    //             toast.error('Server Error while deactivating station');
-    //             console.log('[ERROR] error while deactivating station');
-    //           });
-    //         } else {
-    //           toast.error('Error while stopping pick operation');
-    //         }
-    //       });
-    //     }
-    //   }
-    // });
   }
 
   handleChangeBinBtnClicked() {
@@ -166,7 +126,7 @@ class SideNavigation extends Component {
           <div className="nav-item-container">
             <Link to={taskListUrl} replace={currentPath === taskListUrl}>
               <Button className="nav-btn">
-                {taskType === 'R' ? 'Replenishment List' : 'Picking List'}
+                {taskType === 'R' ? t('label.replenishmentList') : t('label.pickingList')}
               </Button>
             </Link>
           </div>
@@ -175,7 +135,7 @@ class SideNavigation extends Component {
         <div className="nav-item-container nav-bottom">
           { this.renderChangeBinBtn() }
           <Button className="nav-btn" onClick={this.handleLogoutBtnClicked}>
-            Logout
+            {t('label.logout')}
           </Button>
         </div>
       </div>

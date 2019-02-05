@@ -5,16 +5,16 @@ import { compose } from 'recompose';
 import { withNamespaces } from 'react-i18next';
 import { Grid, Button, Input, Icon } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
+import _ from 'lodash';
 
 import api from 'api';
 import OrderListTable from 'components/common/OrderListTable/OrderListTable';
-// import PickOrderTableColumns from 'models/PickOrderTableModel';
 import OperationTaskMenu from 'components/OperationTaskMenu/OperationTaskMenu';
 import InputDialogModal from 'components/common/InputDialogModal';
-import ConfirmDialogModal from 'components/common/ConfirmDialogModal/ConfirmDialogModal';
 
 import { setStationTaskType, checkCurrentUnFinishTask } from 'redux/actions/stationAction';
-import { getTaskStatus } from 'redux/actions/statusAction';
+import { getTaskStatus, getCancelReasonList } from 'redux/actions/statusAction';
+import { resetTaskPage, setRemoveDialog } from 'redux/actions/pickTaskAction';
 
 import './PickTaskPage.css';
 import * as log4js from 'log4js2';
@@ -29,26 +29,24 @@ class PickTaskPage extends Component {
   deleteIndex = 0;
 
   taskTypeOption = [
-    { key: 1, text: 'New', index: 1, value: '0' },
-    { key: 2, text: 'In Progress', index: 2, value: '1' },
-    { key: 3, text: 'Complete', index: 3, value: '5' },
-    { key: 4, text: 'Cancelled', index: 4, value: '5' },
+    { key: 1, tranlationKey: 'label.unprocessed', index: 1, value: '0' },
+    { key: 2, tranlationKey: 'label.inProgess', index: 2, value: '1' },
+    { key: 3, tranlationKey: 'label.finished', index: 3, value: '5' },
+    { key: 4, tranlationKey: 'label.cancelled', index: 4, value: '-1' },
   ];
 
   isLoaded = false;
 
   state = {
     activeTaskType: '0',
-    newOrdersList: [],
     ordersList: [],
     inputLoading: false,
     tableLoading: false,
     pages: 1,
     openBinScanModal: false,
     lastOrderBarcode: '',
-    binBarcode: '',
-    openRemoveConfirm: false,
     binScanErrorMessage: '',
+    cancelErrorMessage: '',
   }
 
   NewOrderTableColumn = [
@@ -56,8 +54,8 @@ class PickTaskPage extends Component {
       key: 'label.barcode',
       accessor: 'barCode',
     }, {
-      key: 'label.productId',
-      accessor: 'productId',
+      key: 'label.productBarcode',
+      accessor: 'productBarCode',
       maxWidth: 100,
     }, {
       key: 'label.quantity',
@@ -73,7 +71,7 @@ class PickTaskPage extends Component {
       maxWidth: 80,
     }, {
       key: 'label.manufacturer',
-      accessor: 'manufacturer',
+      accessor: 'manufacturerName',
     }, {
       key: 'label.status',
       accessor: 'statusName',
@@ -94,10 +92,9 @@ class PickTaskPage extends Component {
     this.scanRef = React.createRef();
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleFetchTableData = this.handleFetchTableData.bind(this);
-    this.backBtnHandler = this.backBtnHandler.bind(this);
     this.handleStartBtn = this.handleStartBtn.bind(this);
     this.handleBinScanSubmit = this.handleBinScanSubmit.bind(this);
-    this.handleRemoveConfirmAction = this.handleRemoveConfirmAction.bind(this);
+    this.handleRemoveScanSubmit = this.handleRemoveScanSubmit.bind(this);
   }
 
   componentWillMount() {
@@ -105,6 +102,8 @@ class PickTaskPage extends Component {
 
     this.setStationTaskType();
     this.startStationOperationCall();
+
+    this.props.getCancelReasonList();
 
     this.props.getTaskStatus().then(() => {
       this.getStationOrderList([1], 1);
@@ -116,13 +115,12 @@ class PickTaskPage extends Component {
     this.focusInput();
   }
 
-  focusInput() {
-    this.scanRef.current.focus();
+  componentWillUnmount() {
+    this.props.resetTaskPage();
   }
 
-  backBtnHandler = () => {
-    console.log('back');
-    this.props.history.goBack();
+  focusInput() {
+    this.scanRef.current.focus();
   }
 
   translateTableColumn = () => {
@@ -132,17 +130,28 @@ class PickTaskPage extends Component {
       return obj;
     });
 
+    const newOptions = this.taskTypeOption.map((obj) => {
+      obj.text = t(obj.tranlationKey);
+      return obj;
+    });
+
     this.NewOrderTableColumn = [...newColumn];
     newColumn.pop();
     this.OrdersTableColumn = newColumn;
+
+    this.taskTypeOption = [...newOptions];
   }
 
   transformOrderRecord(orderList) {
     const { taskStatusList } = this.props;
-    return orderList.map((obj) => {
+
+    const array = orderList.map((obj) => {
+      if (!taskStatusList[obj.stat]) return obj;
       obj.statusName = taskStatusList[obj.stat].name;
       return obj;
     });
+
+    return array;
   }
 
   preProcessInputValue(value) {
@@ -164,6 +173,8 @@ class PickTaskPage extends Component {
       this.getStationOrderList([2, 3, 4], state.page);
     } else if (activeTaskType === '5') {
       this.getStationOrderList([5], state.page);
+    } else if (activeTaskType === '-1') {
+      this.getStationOrderList([-1], state.page);
     }
   }
 
@@ -184,24 +195,10 @@ class PickTaskPage extends Component {
       api.pick.retrieveOrderFromAsm(e.target.value).then((res) => {
         this.setState({ inputLoading: false });
         if (res.success) {
-          const { stationId } = this.props;
-          this.setState({ tableLoading: true });
-
-          // get unstarted order
-          api.pick.getStationOrderList(stationId, [1], 1, this.pageSize).then((result) => {
-            if (result.success) {
-              // TODO: Also need to set pages
-              this.setState({
-                tableLoading: false,
-                ordersList: this.transformOrderRecord(result.data),
-              }, () => {
-                if (result.data.length > 0) {
-                  this.setState({ openBinScanModal: true });
-                }
-              });
+          this.getStationOrderList([1], 1, (result) => {
+            if (result.data.list.length > 0) {
+              this.setState({ openBinScanModal: true });
             }
-          }).catch(() => {
-            this.setState({ tableLoading: false });
           });
 
           this.scanRef.current.inputRef.value = '';
@@ -214,17 +211,19 @@ class PickTaskPage extends Component {
     }
   }
 
-  getStationOrderList(taskTypeList, pageNum) {
+  getStationOrderList(taskTypeList, pageNum, callback = () => {}) {
     const { stationId } = this.props;
     this.setState({ tableLoading: true });
 
     // get unstarted order
     api.pick.getStationOrderList(stationId, taskTypeList, pageNum, this.pageSize).then((res) => {
       if (res.success) {
-        // TODO: Also need to set pages
         this.setState({
           tableLoading: false,
-          ordersList: this.transformOrderRecord(res.data),
+          ordersList: this.transformOrderRecord(res.data.list),
+          pages: res.data.pageNum,
+        }, () => {
+          callback(res);
         });
       }
     }).catch(() => {
@@ -251,13 +250,12 @@ class PickTaskPage extends Component {
   bindBinToOrder = (binBarCode, orderBarCode) => {
     api.pick.bindBinToOrder(orderBarCode, binBarCode).then((res) => {
       if (!res.success) {
-        this.setState({ binBarcode: '' });
         return;
       }
 
       toast.success(`${binBarCode} succuessfully bind to ${orderBarCode}`);
 
-      this.setState({ openBinScanModal: false, binBarcode: '' });
+      this.setState({ openBinScanModal: false });
       this.focusInput();
     });
   }
@@ -270,19 +268,18 @@ class PickTaskPage extends Component {
         this.getStationOrderList([2, 3, 4], 1);
       } else if (value === '5') {
         this.getStationOrderList([5], 1);
+      } else if (value === '-1') {
+        this.getStationOrderList([-1], 1);
       }
     });
   }
 
   handleStartBtn = () => {
     this.log.info('[HANDLE START BTN] Btn clicked');
-    // const barcodeList = this.state.newOrdersList.map(obj => obj.id);
     const barcodeList = this.state.ordersList.map(obj => obj.id);
     api.pick.startPickTask(barcodeList).then((res) => {
       if (res.success) {
         if (res.data.success === 0) {
-          // res.data.errorDesc -> object
-          // TODO: print all error
           toast.error('Cant start operation. Invalid data');
           return;
         }
@@ -293,41 +290,36 @@ class PickTaskPage extends Component {
 
   handleRemoveOrder = (index) => {
     this.deleteIndex = index;
-    this.setState({ openRemoveConfirm: true });
+    this.props.setRemoveDialog(true);
   }
 
-  handleRemoveConfirmAction(result) {
-    if (result) {
-      const { newOrdersList } = this.state;
-      newOrdersList.splice(this.deleteIndex, 1);
-      this.setState({ newOrdersList: [...newOrdersList] });
+  handleRemoveScanSubmit = (cancelCodeStr) => {
+    // validate cancel code
+    if (_.has(this.props.cancelReasonList, cancelCodeStr)) {
+      toast.error('This code does not exist. Please try again');
+      return;
     }
-    this.setState({ openRemoveConfirm: false });
+
+    this.getStationOrderList([1], 1);
+    this.props.setRemoveDialog(false);
   }
 
-  handleBinScanChange = (e, { value }) => {
-    this.setState({ binBarcode: value });
-  }
-
-  handleBinScanSubmit = () => {
-    if (this.state.binBarcode === '') {
+  handleBinScanSubmit = (value) => {
+    if (value === '') {
       this.setState({ binScanErrorMessage: 'Cannot be empty' });
       return;
     }
 
-    // const { newOrdersList } = this.state;
-    // const lastOrderBarcode = newOrdersList[newOrdersList.length - 1].barCode;
-
-    const { binBarcode, lastOrderBarcode } = this.state;
-    this.bindBinToOrder(binBarcode, lastOrderBarcode);
+    const { lastOrderBarcode } = this.state;
+    this.bindBinToOrder(value, lastOrderBarcode);
   }
 
   render() {
     const {
-      tableLoading, ordersList, newOrdersList, inputLoading, pages, activeTaskType,
-      openBinScanModal, binBarcode, openRemoveConfirm, binScanErrorMessage,
+      tableLoading, ordersList, inputLoading, pages, activeTaskType,
+      openBinScanModal, binScanErrorMessage, cancelErrorMessage,
     } = this.state;
-    const { t } = this.props;
+    const { t, openRemoveModal } = this.props;
 
     return (
       <div className="ui pick-task-page-container">
@@ -349,6 +341,7 @@ class PickTaskPage extends Component {
                     listData={ordersList}
                     loading={tableLoading}
                     columns={this.NewOrderTableColumn}
+                    onFetchData={this.handleFetchTableData}
                     pages={pages}
                   />
                 ) : (
@@ -371,7 +364,7 @@ class PickTaskPage extends Component {
                   size="big"
                   ref={this.scanRef}
                   loading={inputLoading}
-                  disabled={newOrdersList.length >= 5}
+                  disabled={ordersList.length >= 5}
                   placeholder="Enter Barcode"
                 />
               )}
@@ -382,7 +375,7 @@ class PickTaskPage extends Component {
                   size="huge"
                   primary
                   onClick={() => this.handleStartBtn()}
-                  disabled={ordersList.length === 0}
+                  disabled={activeTaskType !== '0' || ordersList.length === 0}
                 >
                   {t('label.start')}
                 </Button>
@@ -397,20 +390,18 @@ class PickTaskPage extends Component {
         <InputDialogModal
           open={openBinScanModal}
           headerText="Scan Bin binBarcode"
-          inputValue={binBarcode}
-          onClose={() => {}}
-          onInputChange={this.handleBinScanChange}
           onSubmit={this.handleBinScanSubmit}
           errorMessage={binScanErrorMessage}
           inputType="text"
         />
 
-        <ConfirmDialogModal
-          size="mini"
-          open={openRemoveConfirm}
-          close={this.handleRemoveConfirmAction}
-          header="Remove Order"
-          content="Are you sure you want to remove this order?"
+        <InputDialogModal
+          open={openRemoveModal}
+          headerText="Remove Order"
+          onSubmit={this.handleRemoveScanSubmit}
+          errorMessage={cancelErrorMessage}
+          inputType="text"
+          onClose={() => this.props.setRemoveDialog(false)}
         />
       </div>
     );
@@ -431,6 +422,9 @@ function mapStateToProps(state) {
     username: state.user.username,
     stationId: state.station.id,
     taskStatusList: state.status.taskStatusList,
+    cancelReasonList: state.status.cancelReasonList,
+    openRemoveModal: state.pickTask.openRemoveDialog,
+    // removeScanErrorMessage: state.
   };
 }
 
@@ -439,6 +433,9 @@ export default compose(
     setStationTaskType,
     checkCurrentUnFinishTask,
     getTaskStatus,
+    getCancelReasonList,
+    resetTaskPage,
+    setRemoveDialog,
   }),
   withNamespaces(),
 )(PickTaskPage);

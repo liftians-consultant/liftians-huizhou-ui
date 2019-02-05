@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { compose } from 'recompose';
+import { withNamespaces } from 'react-i18next';
 import { Modal, Icon, Button, Form, Input } from 'semantic-ui-react';
 import { setStationId } from 'redux/actions/stationAction';
 import appConfig from 'services/AppConfig';
@@ -48,6 +50,7 @@ class ServerSettingModal extends Component {
 
   render() {
     const { stationId, host, port, open } = this.state;
+    const { t } = this.props;
     return (
       <Modal
         trigger={<Button className="setting-btn" icon="cogs" size="massive" />}
@@ -58,21 +61,24 @@ class ServerSettingModal extends Component {
       >
         <Modal.Header>
           <Icon name="cogs" size="large" />
-Station Configuration Setting
+          {t('title.stationConfigSetting')}
         </Modal.Header>
         <Modal.Content>
           <Form>
-            <Form.Field control={Input} label="Station ID" name="stationId" value={stationId} onChange={this.handleChange} />
-            <Form.Field control={Input} label="Host" name="host" value={host} onChange={this.handleChange} />
-            <Form.Field control={Input} label="Port" name="port" value={port} onChange={this.handleChange} />
+            <Form.Field control={Input} label={t('label.stationId')} name="stationId" value={stationId} onChange={this.handleChange} />
+            <Form.Field control={Input} label={t('label.server')} name="host" value={host} onChange={this.handleChange} />
+            <Form.Field control={Input} label={t('label.port')} name="port" value={port} onChange={this.handleChange} />
           </Form>
         </Modal.Content>
         <Modal.Actions>
-          <Button positive icon="check" content="Save" onClick={() => this.saveConfig()} />
+          <Button positive icon="check" content={t('button.submit')} onClick={() => this.saveConfig()} />
         </Modal.Actions>
       </Modal>
     );
   }
 }
 
-export default connect(null, { setStationId })(ServerSettingModal);
+export default compose(
+  connect(null, { setStationId }),
+  withNamespaces(),
+)(ServerSettingModal);

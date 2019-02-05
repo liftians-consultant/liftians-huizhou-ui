@@ -4,15 +4,15 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { compose } from 'recompose';
 import { withNamespaces } from 'react-i18next';
-import { Segment, Grid, Button, Dimmer, Loader, Input } from 'semantic-ui-react';
+import { Grid, Dimmer, Loader, Input } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
 
 import api from 'api';
 import PodShelfInfo from 'components/Operation/PodShelfInfo/PodShelfInfo';
-import WarningModal from 'components/common/WarningModal/WarningModal';
+// import WarningModal from 'components/common/WarningModal/WarningModal';
 import ProductInfoDisplay from 'components/common/ProductInfoDisplay/ProductInfoDisplay';
-import InfoDialogModal from 'components/common/InfoDialogModal';
-import ConfirmDialogModal from 'components/common/ConfirmDialogModal/ConfirmDialogModal';
+// import InfoDialogModal from 'components/common/InfoDialogModal';
+// import ConfirmDialogModal from 'components/common/ConfirmDialogModal/ConfirmDialogModal';
 
 import { checkCurrentUnFinishTask } from 'redux/actions/stationAction';
 import './ReplenishOperationPage.css';
@@ -27,10 +27,16 @@ const status = {
   SECOND_LOCATION_SCAN: '22',
 };
 
-const scanMessage = {
-  0: '請掃描 location code',
-  1: '請掃描 product code',
-  2: '請再次掃描 location code',
+const pickScanMessage = {
+  0: 'operation.scanLocation',
+  1: 'operation.pickAndScanProduct',
+  2: 'operation.scanLocation',
+};
+
+const replenishScanMessage = {
+  0: 'operation.scanLocation',
+  1: 'operation.scanAndPlaceProduct',
+  2: 'operation.scanLocation',
 };
 
 class ReplenishOperationPage extends Component {
@@ -49,15 +55,16 @@ class ReplenishOperationPage extends Component {
       column: 0,
     },
     loading: true,
-    openWrongProductModal: false,
-    openChangeLocationModal: false,
-    warningMessage: {
-      onCloseFunc: () => {},
-      headerText: '',
-      contentText: '',
-    },
+    // openWrongProductModal: false,
+    // openChangeLocationModal: false,
+    // warningMessage: {
+    //   onCloseFunc: () => {},
+    //   headerText: '',
+    //   contentText: '',
+    // },
     stillTask: 0,
     taskStatus: 0,
+    actionType: 0,
   };
 
   log = log4js.getLogger('ReplenishOperPage');
@@ -184,6 +191,7 @@ class ReplenishOperationPage extends Component {
                 column: res.data.boxId,
               },
               stillTask: res.data.stillTask,
+              actionType: res.data.type,
             }, () => {
               isReceive = true;
             });
@@ -220,21 +228,22 @@ class ReplenishOperationPage extends Component {
         scanType = null;
       }
 
+      const { t } = this.props;
       api.replenish.pushReceiveProcess(scanType, scannedValue).then((res) => {
         console.log('code:', res);
         switch (res.code) {
           case status.FIRST_LOCATION_SCAN:
-            toast.success('Correct Location');
+            toast.success(t('operation.correctLocation'));
             this.setState({ taskStatus: taskStatus + 1 });
             break;
           case status.PRODUCT_SCAN:
-            toast.success('Correct Product');
+            toast.success(t('operation.correctProduct'));
             this.setState({
               taskStatus: taskStatus + 1,
             });
             break;
           case status.SECOND_LOCATION_SCAN:
-            toast.success('Correct Location');
+            toast.success(t('operation.correctLocation'));
             if (this.state.stillTask === 0) {
               toast.success('All Task Finished');
               clearInterval(this.productInterval);
@@ -253,15 +262,16 @@ class ReplenishOperationPage extends Component {
 
 
   render() {
-    const { podInfo, currentReplenishProduct, taskStatus,
+    const { podInfo, currentReplenishProduct, taskStatus, actionType,
       currentHighlightBox } = this.state;
-
     const { t } = this.props;
+
+    const scanMessage = actionType === 1 ? pickScanMessage : replenishScanMessage;
 
     return (
       <div className="replenish-operation-page">
         <Dimmer active={this.state.loading}>
-          <Loader content="Waiting for pod..." indeterminate size="massive" />
+          <Loader content={t('operation.waitingForPod')} indeterminate size="massive" />
         </Dimmer>
         <Grid>
           <Grid.Row>
@@ -285,7 +295,7 @@ class ReplenishOperationPage extends Component {
                 <div className="scan-input-group">
                   <br />
                   <div className="scan-description">
-                    {scanMessage[taskStatus]}
+                    {t(scanMessage[taskStatus])}
                   </div>
                   <div className="scan-input-holder">
                     <Input
@@ -333,13 +343,13 @@ ReplenishOperationPage.propTypes = {
   }).isRequired,
 };
 
-function mapStateToProps(state) {
-  return {
-  };
-}
+// function mapStateToProps(state) {
+//   return {
+//   };
+// }
 
 export default compose(
-  connect(mapStateToProps, {
+  connect(null, {
     checkCurrentUnFinishTask,
   }),
   withNamespaces(),
