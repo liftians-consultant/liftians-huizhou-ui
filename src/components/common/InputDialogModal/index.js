@@ -37,6 +37,7 @@ class InputDialogModal extends Component {
 
   handleSubmit = () => {
     this.props.onSubmit(this.state.value);
+    this.setState({ value: '' });
   }
 
   render() {

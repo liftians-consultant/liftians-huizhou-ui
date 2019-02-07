@@ -193,7 +193,7 @@ class ReplenishTaskPage extends Component {
           this.scanRef.current.focus();
         }
       }).catch(() => {
-        toast.error('[Server error] Error while retreive order from asm');
+        toast.error(this.props.t('message.error.retreiveOrderFromAsm'));
         this.setState({ inputLoading: false });
       });
     }
@@ -226,11 +226,11 @@ class ReplenishTaskPage extends Component {
   startStationOperationCall() {
     api.station.startStationOperation('R').then((res) => {
       if (!res.success) {
-        toast.error('Cannot start station. Please contact your system admin');
+        toast.error(this.props.t('message.eerror.cannotStartStation'));
       }
-      this.log.info('[REPLENISH TASK] Station Started with P');
+      this.log.info('[REPLENISH TASK] Station Started with R');
     }).catch(() => {
-      toast.error('Server Error. Please contact your system admin');
+      toast.error(this.props.t('message.error.contactAdmin'));
       this.log.info('[REPLENISH TASK] ERROR');
     });
   }
@@ -256,7 +256,7 @@ class ReplenishTaskPage extends Component {
     api.replenish.startReceiveTask(barcodeList).then((res) => {
       if (res.success) {
         if (res.data.success === 0) {
-          toast.error('Cant start operation. Invalid data');
+          toast.error(this.props.t('message.error.cannotStartOperation'));
           return;
         }
         this.props.history.push('/operation');
@@ -272,7 +272,7 @@ class ReplenishTaskPage extends Component {
   handleRemoveScanSubmit = (cancelCodeStr) => {
     // validate cancel code
     if (_.has(this.props.cancelReasonList, cancelCodeStr)) {
-      toast.error('This code does not exist. Please try again');
+      toast.error(this.props.t('message.error.cancelCodeNotExist'));
       return;
     }
 
@@ -329,7 +329,7 @@ class ReplenishTaskPage extends Component {
                   size="big"
                   ref={this.scanRef}
                   loading={inputLoading}
-                  placeholder="Enter Barcode"
+                  placeholder={t('label.scanOrderBarcode')}
                 />
               )}
             </Grid.Column>
@@ -353,7 +353,7 @@ class ReplenishTaskPage extends Component {
 
         <InputDialogModal
           open={openRemoveModal}
-          headerText="Remove Order"
+          headerText={t('label.cancelOrder')}
           onSubmit={this.handleRemoveScanSubmit}
           errorMessage={cancelErrorMessage}
           inputType="text"

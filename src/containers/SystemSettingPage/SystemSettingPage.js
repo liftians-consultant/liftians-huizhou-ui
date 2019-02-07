@@ -67,26 +67,26 @@ class SystemSettingPage extends Component {
         <Grid columns={3}>
           <Grid.Row>
             <Grid.Column>
-              <MenuButton title="Reset System" name="reset-system" clickHandler={this.resetSystemBtnHandler} />
+              <MenuButton title={t('title.resetSystem')} name="reset-system" clickHandler={this.resetSystemBtnHandler} />
             </Grid.Column>
             <Grid.Column>
-              <MenuButton title="Business Rules" name="business-rules" clickHandler={this.goToPage} />
+              <MenuButton title={t('title.businessRule')} name="business-rules" clickHandler={this.goToPage} />
             </Grid.Column>
             <Grid.Column>
-              <MenuButton title="Log Search" name="log-search" clickHandler={this.goToNowhere} />
+              <MenuButton title={t('title.logSearch')} name="log-search" clickHandler={this.goToNowhere} />
             </Grid.Column>
           </Grid.Row>
 
           <Grid.Row>
             <Grid.Column>
+              <MenuButton title={t('title.adjustPodLayout')} name="pod-layout-adjust" clickHandler={this.goToPage} />
+            </Grid.Column>
+            <Grid.Column>
+              <MenuButton title={t('title.setLanguage')} name="language" clickHandler={this.goToPage} />
+            </Grid.Column>
+            {/* <Grid.Column>
               <MenuButton title="Volumne Change" name="volume-change" clickHandler={this.goToNowhere} />
-            </Grid.Column>
-            <Grid.Column>
-              <MenuButton title="Language" name="language" clickHandler={this.goToPage} />
-            </Grid.Column>
-            <Grid.Column>
-              <MenuButton title="Task List" name="task-list" clickHandler={this.goToPage} />
-            </Grid.Column>
+            </Grid.Column> */}
           </Grid.Row>
         </Grid>
 

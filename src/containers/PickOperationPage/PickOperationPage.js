@@ -9,11 +9,7 @@ import { toast } from 'react-toastify';
 
 import api from 'api';
 import ProductInfoDisplay from 'components/common/ProductInfoDisplay/ProductInfoDisplay';
-import WarningModal from 'components/common/WarningModal/WarningModal';
-import WrongProductModal from 'components/Operation/WrongProductModal/WrongProductModal';
 import PodShelfInfo from 'components/Operation/PodShelfInfo/PodShelfInfo';
-import ConfirmDialogModal from 'components/common/ConfirmDialogModal/ConfirmDialogModal';
-import InfoDialogModal from 'components/common/InfoDialogModal';
 
 import {
   getStationDeviceList,
@@ -38,10 +34,10 @@ const status = {
   SECOND_LOCATION_SCAN: '1',
 };
 
-const scanMessage = {
-  0: '請掃描 location code',
-  1: '請掃描 product code',
-  2: '請再次掃描 location code',
+const pickScanMessage = {
+  0: 'operation.scanLocation',
+  1: 'operation.pickAndScanProduct',
+  2: 'operation.scanLocationAgain',
 };
 
 class PickOperationPage extends Component {
@@ -62,11 +58,6 @@ class PickOperationPage extends Component {
     currentBinColor: '',
     pickedAmount: 0,
     loading: true,
-    barcode: '',
-    openWrongProductModal: false,
-    openShortageConfirmModal: false,
-    warningMessage: '',
-    openTaskFinishModal: false,
     stillTask: 0,
     taskStatus: 0, // 0 unstart, 1 already scan location, 2 already scan product
   };
@@ -77,16 +68,7 @@ class PickOperationPage extends Component {
 
   checkPodInterval = {};
 
-  checkETagResondInterval = false;
-
-  businessMode = process.env.REACT_APP_BUSINESS_MODE;
-
   productInterval = {};
-
-  finishedOrder = {
-    binNum: 0,
-    orderNo: '235345',
-  };
 
   constructor(props) {
     super(props);
@@ -96,11 +78,7 @@ class PickOperationPage extends Component {
 
     // Bind the this context to the handler function
     this.retrieveNextOrder = this.retrieveNextOrder.bind(this);
-    this.closeWrongProductModal = this.closeWrongProductModal.bind(this);
     this.handleScanKeyPress = this.handleScanKeyPress.bind(this);
-    this.handleShortageClick = this.handleShortageClick.bind(this);
-    this.closeWarningModal = this.closeWarningModal.bind(this);
-    this.handleShortageModalConfirmed = this.handleShortageModalConfirmed.bind(this);
   }
 
   componentWillMount() {
@@ -112,7 +90,7 @@ class PickOperationPage extends Component {
 
   componentWillUnmount() {
     this.logInfo('Leaving Pick Operation Page');
-    clearInterval(this.productInterval);
+    clearInterval(window.productInterval);
   }
 
   componentDidMount() {
@@ -189,7 +167,7 @@ class PickOperationPage extends Component {
     this.setState({ loading: true });
 
     let isReceive = false;
-    this.productInterval = setInterval(() => {
+    window.productInterval = setInterval(() => {
       if (!isReceive) {
         api.station.getStationProductInfo().then((res) => {
           if (res.success) {
@@ -215,14 +193,9 @@ class PickOperationPage extends Component {
         console.log(`[location] ${this.state.currentPickProduct.locationCode}`);
         console.log(`[product] ${this.state.currentPickProduct.productBarCode}`);
         this.getPodInfo();
-        clearInterval(this.productInterval);
+        clearInterval(window.productInterval);
       }
     }, 3000);
-  }
-
-  closeWarningModal() {
-    this.setFocusToScanInput();
-    this.setState({ warningMessage: '' });
   }
 
   /* Production */
@@ -260,7 +233,7 @@ class PickOperationPage extends Component {
           toast.success('Correct Location');
           if (this.state.stillTask === 0) {
             toast.success('All Task Finished');
-            clearInterval(this.productInterval);
+            clearInterval(window.productInterval);
             this.props.history.push('/pick-task');
           }
           this.getProductInfo();
@@ -271,36 +244,8 @@ class PickOperationPage extends Component {
     }
   }
 
-  // TODO: change
-  handleShortageClick() {
-    this.logInfo('[SHORTAGE] Button Clicked!');
-    this.setState({ openShortageConfirmModal: true });
-  }
-
-  // TODO: change
-  handleShortageModalConfirmed(result) {
-    if (result) {
-      this.logInfo('[SHORTAGE] Modal Confirmed');
-      // this.finishPick();
-      toast.success('Shortage Confirmed');
-    }
-
-    this.setState({ openShortageConfirmModal: false });
-  }
-
-  closeWrongProductModal() {
-    this.setState({ openWrongProductModal: false });
-    this.setFocusToScanInput();
-  }
-
-  handleTaskFinishClose() {
-    this.setState({ openTaskFinishModal: false });
-    this.props.history.push('/pick-task');
-  }
-
   render() {
-    const { warningMessage, podInfo, currentPickProduct, pickedAmount,
-      openWrongProductModal, barcode,
+    const { podInfo, currentPickProduct, pickedAmount,
       currentHighlightBox, currentBinColor, taskStatus,
     } = this.state;
 
@@ -317,7 +262,6 @@ class PickOperationPage extends Component {
               <PodShelfInfo
                 podInfo={podInfo}
                 highlightBox={currentHighlightBox}
-                onShortageClicked={this.handleShortageClick}
                 showAdditionBtns={false}
               />
             </Grid.Column>
@@ -336,7 +280,7 @@ class PickOperationPage extends Component {
                   <div className="scan-input-group">
                     <br />
                     <div className="scan-description">
-                      {scanMessage[taskStatus]}
+                      {t(pickScanMessage[taskStatus])}
                     </div>
                     <div className="scan-input-holder">
                       <Input
@@ -347,54 +291,11 @@ class PickOperationPage extends Component {
                       />
                     </div>
                   </div>
-                  {/* <div className="action-btn-group">
-                    { process.env.REACT_APP_ENV === 'DEV' && (
-                      <Button primary size="medium" onClick={() => this.handleScanBtnClick()}>
-                        Scan
-                      </Button>
-                    )}
-                  </div> */}
                 </div>
               </div>
             </Grid.Column>
           </Grid.Row>
         </Grid>
-
-        { openWrongProductModal && (
-          <WrongProductModal
-            podInfo={podInfo}
-            productId={barcode}
-            open={openWrongProductModal}
-            close={this.closeWrongProductModal}
-          />
-        )
-        }
-
-        { warningMessage && (
-          <WarningModal
-            open
-            onClose={this.closeWarningModal}
-            headerText="Warning"
-            contentText={warningMessage}
-          />
-        )
-        }
-
-        <ConfirmDialogModal
-          size="mini"
-          open={this.state.openShortageConfirmModal}
-          close={this.handleShortageModalConfirmed}
-          header="Shortage"
-          content="Are you sure you want to report a shortage?"
-        />
-
-        <InfoDialogModal
-          open={this.state.openTaskFinishModal}
-          onClose={this.handleTaskFinishClose}
-          headerText="Finished"
-          contentText="Yay! All orders are finished"
-        />
-
       </div>
     );
   }

@@ -28,7 +28,8 @@ class HomePage extends Component {
   }
 
   componentWillMount() {
-    // this.props.getUserInfoById(this.props.userId).then(() => {
+    clearInterval(window.productInterval);
+
     this.props.activateStation(this.props.stationId, this.props.userId).then((res) => {
       if (res) {
         this.checkCurrentUnFinishTaskCall();
@@ -36,9 +37,6 @@ class HomePage extends Component {
         toast.error('Failed to activate station');
       }
     });
-    // });
-
-    // ETagService.turnEndLightOffById(0);
 
     if (!logSetFlag) {
       log4js.addAppender(AjaxAppenderProvider({

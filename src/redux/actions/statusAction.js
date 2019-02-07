@@ -18,12 +18,12 @@ export const fetchTaskStatusFailureAction = () => ({
 });
 
 export const fetchCancelReasonSuccessAction = cancelReasonList => ({
-  type: FETCH_TASK_STATUS_SUCCESS,
+  type: FETCH_CANCEL_REASON_SUCCESS,
   cancelReasonList,
 });
 
 export const fetchCancelReasonFailureAction = () => ({
-  type: FETCH_TASK_STATUS_FAILURE,
+  type: FETCH_CANCEL_REASON_FAILURE,
 });
 
 export const getTaskStatus = () => (dispatch, getState) => new Promise((resolve) => {

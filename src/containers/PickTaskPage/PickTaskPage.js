@@ -28,6 +28,8 @@ class PickTaskPage extends Component {
 
   deleteIndex = 0;
 
+  orderLimit = 10;
+
   taskTypeOption = [
     { key: 1, tranlationKey: 'label.unprocessed', index: 1, value: '0' },
     { key: 2, tranlationKey: 'label.inProgess', index: 2, value: '1' },
@@ -47,6 +49,7 @@ class PickTaskPage extends Component {
     lastOrderBarcode: '',
     binScanErrorMessage: '',
     cancelErrorMessage: '',
+    isLimit: false,
   }
 
   NewOrderTableColumn = [
@@ -98,6 +101,8 @@ class PickTaskPage extends Component {
   }
 
   componentWillMount() {
+    clearInterval(window.productInterval);
+
     this.translateTableColumn();
 
     this.setStationTaskType();
@@ -107,6 +112,7 @@ class PickTaskPage extends Component {
 
     this.props.getTaskStatus().then(() => {
       this.getStationOrderList([1], 1);
+      this.checkTaskCountOverflow();
       this.isLoaded = true;
     });
   }
@@ -145,11 +151,13 @@ class PickTaskPage extends Component {
   transformOrderRecord(orderList) {
     const { taskStatusList } = this.props;
 
-    const array = orderList.map((obj) => {
+    let array = orderList.map((obj) => {
       if (!taskStatusList[obj.stat]) return obj;
       obj.statusName = taskStatusList[obj.stat].name;
       return obj;
     });
+
+    array = _.sortBy(array, ['id']);
 
     return array;
   }
@@ -167,14 +175,15 @@ class PickTaskPage extends Component {
     if (!this.isLoaded) return;
 
     const { activeTaskType } = this.state;
+    const newPage = state.page + 1; // index start from 0.
     if (activeTaskType === '0') {
-      this.getStationOrderList([1], state.page);
+      this.getStationOrderList([1], newPage);
     } else if (activeTaskType === '1') {
-      this.getStationOrderList([2, 3, 4], state.page);
+      this.getStationOrderList([2, 3, 4], newPage);
     } else if (activeTaskType === '5') {
-      this.getStationOrderList([5], state.page);
+      this.getStationOrderList([5], newPage);
     } else if (activeTaskType === '-1') {
-      this.getStationOrderList([-1], state.page);
+      this.getStationOrderList([-1], newPage);
     }
   }
 
@@ -199,13 +208,14 @@ class PickTaskPage extends Component {
             if (result.data.list.length > 0) {
               this.setState({ openBinScanModal: true });
             }
+            this.checkTaskCountOverflow();
           });
 
           this.scanRef.current.inputRef.value = '';
           this.scanRef.current.focus();
         }
       }).catch(() => {
-        toast.error('[Server error] Error while retreive order from asm');
+        toast.error(this.props.t('message.error.retreiveOrderFromAsm'));
         this.setState({ inputLoading: false });
       });
     }
@@ -231,6 +241,21 @@ class PickTaskPage extends Component {
     });
   }
 
+  checkTaskCountOverflow() {
+    const { stationId } = this.props;
+
+    api.pick.getStationOrderList(stationId, [1, 2, 3, 4], 1, this.pageSize).then((res) => {
+      if (res.success) {
+        if (res.data.list.length >= this.orderLimit) {
+          this.setState({ isLimit: true });
+        } else {
+          this.setState({ isLimit: false });
+        }
+      }
+    }).catch(() => {
+    });
+  }
+
   setStationTaskType() {
     this.props.setStationTaskType('P');
   }
@@ -238,11 +263,11 @@ class PickTaskPage extends Component {
   startStationOperationCall() {
     api.station.startStationOperation('P').then((res) => {
       if (!res.success) {
-        toast.error('Cannot start station. Please contact your system admin');
+        toast.error(this.props.t('message.eerror.cannotStartStation'));
       }
       this.log.info('[PICK TASK] Station Started with P');
     }).catch(() => {
-      toast.error('Server Error. Please contact your system admin');
+      toast.error(this.props.t('message.error.contactAdmin'));
       this.log.info('[PICK TASK] ERROR');
     });
   }
@@ -253,7 +278,7 @@ class PickTaskPage extends Component {
         return;
       }
 
-      toast.success(`${binBarCode} succuessfully bind to ${orderBarCode}`);
+      toast.success(this.props.t('message.binBindToOrder', { orderBarCode, binBarCode }));
 
       this.setState({ openBinScanModal: false });
       this.focusInput();
@@ -280,7 +305,7 @@ class PickTaskPage extends Component {
     api.pick.startPickTask(barcodeList).then((res) => {
       if (res.success) {
         if (res.data.success === 0) {
-          toast.error('Cant start operation. Invalid data');
+          toast.error(this.props.t('message.error.cannotStartOperation'));
           return;
         }
         this.props.history.push('/operation');
@@ -296,7 +321,7 @@ class PickTaskPage extends Component {
   handleRemoveScanSubmit = (cancelCodeStr) => {
     // validate cancel code
     if (_.has(this.props.cancelReasonList, cancelCodeStr)) {
-      toast.error('This code does not exist. Please try again');
+      toast.error(this.props.t('message.error.cancelCodeNotExist'));
       return;
     }
 
@@ -306,7 +331,7 @@ class PickTaskPage extends Component {
 
   handleBinScanSubmit = (value) => {
     if (value === '') {
-      this.setState({ binScanErrorMessage: 'Cannot be empty' });
+      this.setState({ binScanErrorMessage: this.props.t('message.cannotBeEmpty') });
       return;
     }
 
@@ -317,7 +342,7 @@ class PickTaskPage extends Component {
   render() {
     const {
       tableLoading, ordersList, inputLoading, pages, activeTaskType,
-      openBinScanModal, binScanErrorMessage, cancelErrorMessage,
+      openBinScanModal, binScanErrorMessage, cancelErrorMessage, isLimit,
     } = this.state;
     const { t, openRemoveModal } = this.props;
 
@@ -364,8 +389,8 @@ class PickTaskPage extends Component {
                   size="big"
                   ref={this.scanRef}
                   loading={inputLoading}
-                  disabled={ordersList.length >= 5}
-                  placeholder="Enter Barcode"
+                  disabled={isLimit}
+                  placeholder={t('label.scanOrderBarcode')}
                 />
               )}
             </Grid.Column>
@@ -389,7 +414,7 @@ class PickTaskPage extends Component {
 
         <InputDialogModal
           open={openBinScanModal}
-          headerText="Scan Bin binBarcode"
+          headerText={t('label.scanBinBarcode')}
           onSubmit={this.handleBinScanSubmit}
           errorMessage={binScanErrorMessage}
           inputType="text"
@@ -397,7 +422,7 @@ class PickTaskPage extends Component {
 
         <InputDialogModal
           open={openRemoveModal}
-          headerText="Remove Order"
+          headerText={t('label.cancelOrder')}
           onSubmit={this.handleRemoveScanSubmit}
           errorMessage={cancelErrorMessage}
           inputType="text"

@@ -9,10 +9,7 @@ import { toast } from 'react-toastify';
 
 import api from 'api';
 import PodShelfInfo from 'components/Operation/PodShelfInfo/PodShelfInfo';
-// import WarningModal from 'components/common/WarningModal/WarningModal';
 import ProductInfoDisplay from 'components/common/ProductInfoDisplay/ProductInfoDisplay';
-// import InfoDialogModal from 'components/common/InfoDialogModal';
-// import ConfirmDialogModal from 'components/common/ConfirmDialogModal/ConfirmDialogModal';
 
 import { checkCurrentUnFinishTask } from 'redux/actions/stationAction';
 import './ReplenishOperationPage.css';
@@ -55,40 +52,12 @@ class ReplenishOperationPage extends Component {
       column: 0,
     },
     loading: true,
-    // openWrongProductModal: false,
-    // openChangeLocationModal: false,
-    // warningMessage: {
-    //   onCloseFunc: () => {},
-    //   headerText: '',
-    //   contentText: '',
-    // },
     stillTask: 0,
     taskStatus: 0,
     actionType: 0,
   };
 
   log = log4js.getLogger('ReplenishOperPage');
-
-  businessMode = process.env.REACT_APP_BUSINESS_MODE;
-
-  productInterval = {};
-
-  wrongBoxWarningMessage = {
-    onCloseFunc: this.closeWrongBoxModal,
-    headerText: 'Change Location',
-    contentText: 'You scanned a different location! Are you sure?',
-  };
-
-  wrongProductWarningMessage = {
-    onCloseFunc: this.closeWrongProductModal,
-    headerText: 'Wrong Product',
-    contentText: 'You scanned a wrong product! Please make sure you have the right product and try again.',
-  };
-
-  finishedOrder = {
-    binNum: 3,
-    orderNo: '235345',
-  };
 
   constructor(props) {
     super(props);
@@ -108,7 +77,7 @@ class ReplenishOperationPage extends Component {
   }
 
   componentWillUnmount() {
-    clearInterval(this.productInterval);
+    clearInterval(window.productInterval);
   }
 
   componentDidMount() {
@@ -178,7 +147,7 @@ class ReplenishOperationPage extends Component {
     this.setState({ loading: true });
 
     let isReceive = false;
-    this.productInterval = setInterval(() => {
+    window.productInterval = setInterval(() => {
       if (!isReceive) {
         api.replenish.getReceiveProductInfo().then((res) => {
           console.log('GET PRODUCT', res);
@@ -205,7 +174,7 @@ class ReplenishOperationPage extends Component {
         console.log(`[location] ${this.state.currentReplenishProduct.locationCode}`);
         console.log(`[product] ${this.state.currentReplenishProduct.productBarCode}`);
         this.getPodInfo();
-        clearInterval(this.productInterval);
+        clearInterval(window.productInterval);
       }
     }, 3000);
   }
@@ -245,8 +214,8 @@ class ReplenishOperationPage extends Component {
           case status.SECOND_LOCATION_SCAN:
             toast.success(t('operation.correctLocation'));
             if (this.state.stillTask === 0) {
-              toast.success('All Task Finished');
-              clearInterval(this.productInterval);
+              toast.success(t('message.allTaskFinished'));
+              clearInterval(window.productInterval);
               this.props.history.push('/pick-task');
             }
             this.getProductInfo();
@@ -300,7 +269,6 @@ class ReplenishOperationPage extends Component {
                   <div className="scan-input-holder">
                     <Input
                       type="text"
-                      placeholder="Enter or Scan Box Barcode"
                       ref={this.scanInputRef}
                       onKeyPress={this.handleScanKeyPress}
                     />
@@ -310,28 +278,6 @@ class ReplenishOperationPage extends Component {
             </Grid.Column>
           </Grid.Row>
         </Grid>
-
-        {/* <WarningModal
-          open={this.state.openWrongProductModal}
-          onClose={warningMessage.onCloseFunc.bind(this)} // eslint-disable-line
-          headerText={warningMessage.headerText}
-          contentText={warningMessage.contentText}
-        />
-
-        <ConfirmDialogModal
-          size="small"
-          open={openChangeLocationModal}
-          close={this.closeWrongBoxModal}
-          header="Change Location"
-          content="You scanned a different location! Are you sure?"
-        />
-
-        <InfoDialogModal
-          open={this.state.openTaskFinishModal}
-          onClose={this.handleTaskFinishClose}
-          headerText="Finished"
-          contentText="Yay! All orders are finished"
-        /> */}
       </div>
     );
   }
