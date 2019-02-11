@@ -222,12 +222,12 @@ const replenish = {
     .then(res => parseResult(res)),
 
   getReceiveProductInfo: () => wmsRequest('GET_RECEIVE_PRODUCT_INFO')
-    .then(res => parseResult(res)),
+    .then(res => parseResult(res), ['13', '14']),
 
   pushReceiveProcess: (type, barCode) => wmsRequest('PUSH_RECEIVE_PROCESS', {
     type,
     barCode,
-  }).then(res => parseResult(res)),
+  }).then(res => parseResult(res), ['20', '21', '22']),
 };
 
 const inventory = {
