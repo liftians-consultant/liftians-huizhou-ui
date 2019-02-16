@@ -45,11 +45,10 @@ class PickTaskPage extends Component {
     inputLoading: false,
     tableLoading: false,
     pages: 1,
-    openBinScanModal: false,
-    lastOrderBarcode: '',
     binScanErrorMessage: '',
     cancelErrorMessage: '',
     isLimit: false,
+    unbindedOrderList: [],
   }
 
   NewOrderTableColumn = [
@@ -96,6 +95,7 @@ class PickTaskPage extends Component {
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleFetchTableData = this.handleFetchTableData.bind(this);
     this.handleStartBtn = this.handleStartBtn.bind(this);
+    this.handleContinueBtn = this.handleContinueBtn.bind(this);
     this.handleBinScanSubmit = this.handleBinScanSubmit.bind(this);
     this.handleRemoveScanSubmit = this.handleRemoveScanSubmit.bind(this);
   }
@@ -111,7 +111,7 @@ class PickTaskPage extends Component {
     this.props.getCancelReasonList();
 
     this.props.getTaskStatus().then(() => {
-      this.getStationOrderList([1], 1);
+      this.getStationOrderList([1], 1, () => this.addUnbindOrder());
       this.checkTaskCountOverflow();
       this.isLoaded = true;
     });
@@ -126,6 +126,7 @@ class PickTaskPage extends Component {
   }
 
   focusInput() {
+    this.scanRef.current.inputRef.value = '';
     this.scanRef.current.focus();
   }
 
@@ -151,13 +152,13 @@ class PickTaskPage extends Component {
   transformOrderRecord(orderList) {
     const { taskStatusList } = this.props;
 
-    let array = orderList.map((obj) => {
+    const array = orderList.map((obj) => {
       if (!taskStatusList[obj.stat]) return obj;
       obj.statusName = taskStatusList[obj.stat].name;
       return obj;
     });
 
-    array = _.sortBy(array, ['id']);
+    // array = _.sortBy(array, ['id']);
 
     return array;
   }
@@ -177,7 +178,7 @@ class PickTaskPage extends Component {
     const { activeTaskType } = this.state;
     const newPage = state.page + 1; // index start from 0.
     if (activeTaskType === '0') {
-      this.getStationOrderList([1], newPage);
+      this.getStationOrderList([1], newPage, () => this.addUnbindOrder());
     } else if (activeTaskType === '1') {
       this.getStationOrderList([2, 3, 4], newPage);
     } else if (activeTaskType === '5') {
@@ -197,28 +198,36 @@ class PickTaskPage extends Component {
 
       this.setState({
         inputLoading: true,
-        lastOrderBarcode: e.target.value,
         activeTaskType: '0',
       });
 
       api.pick.retrieveOrderFromAsm(e.target.value).then((res) => {
+        this.focusInput();
         this.setState({ inputLoading: false });
         if (res.success) {
-          this.getStationOrderList([1], 1, (result) => {
-            if (result.data.list.length > 0) {
-              this.setState({ openBinScanModal: true });
-            }
+          this.getStationOrderList([1], 1, () => {
+            this.addUnbindOrder();
             this.checkTaskCountOverflow();
           });
-
-          this.scanRef.current.inputRef.value = '';
-          this.scanRef.current.focus();
         }
       }).catch(() => {
         toast.error(this.props.t('message.error.retreiveOrderFromAsm'));
+        this.focusInput();
         this.setState({ inputLoading: false });
       });
     }
+  }
+
+  addUnbindOrder() {
+    const { ordersList, unbindedOrderList } = this.state;
+
+    ordersList.forEach((obj) => {
+      if (obj.binBarCode === null) {
+        unbindedOrderList.push(obj.barCode);
+      }
+    });
+
+    this.setState({ unbindedOrderList });
   }
 
   getStationOrderList(taskTypeList, pageNum, callback = () => {}) {
@@ -272,23 +281,28 @@ class PickTaskPage extends Component {
     });
   }
 
-  bindBinToOrder = (binBarCode, orderBarCode) => {
+  bindBinToOrder = (binBarCode) => {
+    const { unbindedOrderList } = this.state;
+    const orderBarCode = unbindedOrderList[0];
     api.pick.bindBinToOrder(orderBarCode, binBarCode).then((res) => {
       if (!res.success) {
         return;
       }
+      unbindedOrderList.shift();
 
       toast.success(this.props.t('message.binBindToOrder', { orderBarCode, binBarCode }));
-
-      this.setState({ openBinScanModal: false });
-      this.focusInput();
+      this.setState({ unbindedOrderList }, () => {
+        if (unbindedOrderList.length === 0) {
+          this.focusInput();
+        }
+      });
     });
   }
 
   handleTaskChange = (e, { value }) => {
     this.setState({ activeTaskType: value }, () => {
       if (value === '0') {
-        this.getStationOrderList([1], 1);
+        this.getStationOrderList([1], 1, () => this.addUnbindOrder());
       } else if (value === '1') {
         this.getStationOrderList([2, 3, 4], 1);
       } else if (value === '5') {
@@ -313,6 +327,10 @@ class PickTaskPage extends Component {
     });
   }
 
+  handleContinueBtn = () => {
+    this.props.history.push('/operation');
+  }
+
   handleRemoveOrder = (index) => {
     this.deleteIndex = index;
     this.props.setRemoveDialog(true);
@@ -325,7 +343,15 @@ class PickTaskPage extends Component {
       return;
     }
 
-    this.getStationOrderList([1], 1);
+    // TODO: REASON CODE
+    api.pick.cancelDeliveryOrder(this.state.ordersList[this.deleteIndex].id, 'REASON CODE').then((res) => {
+      if (res.success) {
+        this.setState({ tableLoading: true });
+        setTimeout(() => {
+          this.getStationOrderList([1], 1, () => this.addUnbindOrder());
+        }, 2000);
+      }
+    });
     this.props.setRemoveDialog(false);
   }
 
@@ -335,14 +361,14 @@ class PickTaskPage extends Component {
       return;
     }
 
-    const { lastOrderBarcode } = this.state;
-    this.bindBinToOrder(value, lastOrderBarcode);
+    // const { lastOrderBarcode } = this.state;
+    this.bindBinToOrder(value);
   }
 
   render() {
     const {
       tableLoading, ordersList, inputLoading, pages, activeTaskType,
-      openBinScanModal, binScanErrorMessage, cancelErrorMessage, isLimit,
+      binScanErrorMessage, cancelErrorMessage, isLimit, unbindedOrderList,
     } = this.state;
     const { t, openRemoveModal } = this.props;
 
@@ -396,25 +422,33 @@ class PickTaskPage extends Component {
             </Grid.Column>
             <Grid.Column width={11}>
               <div className="order-list-btn-group">
-                <Button
-                  size="huge"
-                  primary
-                  onClick={() => this.handleStartBtn()}
-                  disabled={activeTaskType !== '0' || ordersList.length === 0}
-                >
-                  {t('label.start')}
-                </Button>
-                {/* <Button size="huge" secondary onClick={() => this.handlePauseBtn()}>
-                  {t('label.pause')}
-                </Button> */}
+                { activeTaskType === '0' && (
+                  <Button
+                    size="huge"
+                    primary
+                    onClick={() => this.handleStartBtn()}
+                    disabled={ordersList.length === 0}
+                  >
+                    {t('label.start')}
+                  </Button>
+                )}
+                { activeTaskType === '1' && (
+                  <Button
+                    size="huge"
+                    onClick={() => this.handleContinueBtn()}
+                    disabled={ordersList.length === 0}
+                  >
+                    {t('label.continue')}
+                  </Button>
+                )}
               </div>
             </Grid.Column>
           </Grid.Row>
         </Grid>
 
         <InputDialogModal
-          open={openBinScanModal}
-          headerText={t('label.scanBinBarcode')}
+          open={unbindedOrderList.length > 0}
+          headerText={t('label.scanBinBarcode', { orderBarcode: unbindedOrderList[0] || '' })}
           onSubmit={this.handleBinScanSubmit}
           errorMessage={binScanErrorMessage}
           inputType="text"

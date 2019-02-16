@@ -1,6 +1,7 @@
 import { USER_LOGGED_IN, USER_LOGGED_OUT } from 'redux/types';
 import api from 'api';
 import setAuthorizationHeader from 'utils/setAuthorizationHeader';
+import i18n from 'i18n';
 
 export const userLoggedIn = user => ({
   type: USER_LOGGED_IN,
@@ -20,7 +21,10 @@ export const login = credentials => dispatch => api.user.login(credentials)
         token: res.data.token,
         username: credentials.username,
         userId: res.data.userId,
+        language: res.data.language,
       };
+
+      i18n.changeLanguage(res.data.language);
 
       dispatch(userLoggedIn(user));
       return true;

@@ -89,12 +89,15 @@ class ReplenishTaskPage extends Component {
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleFetchTableData = this.handleFetchTableData.bind(this);
     this.handleStartBtn = this.handleStartBtn.bind(this);
+    this.handleContinueBtn = this.handleContinueBtn.bind(this);
     this.getStationOrderList = this.getStationOrderList.bind(this);
     this.handleRemoveScanSubmit = this.handleRemoveScanSubmit.bind(this);
   }
 
 
   componentWillMount() {
+    clearInterval(window.productInterval);
+
     this.translateTableColumn();
 
     this.setStationTaskType();
@@ -259,9 +262,13 @@ class ReplenishTaskPage extends Component {
           toast.error(this.props.t('message.error.cannotStartOperation'));
           return;
         }
-        this.props.history.push('/operation');
+        this.props.history.push('/replenish-operation');
       }
     });
+  }
+
+  handleContinueBtn = () => {
+    this.props.history.push('/replenish-operation');
   }
 
   handleRemoveOrder = (index) => {
@@ -335,17 +342,25 @@ class ReplenishTaskPage extends Component {
             </Grid.Column>
             <Grid.Column width={11}>
               <div className="order-list-btn-group">
-                <Button
-                  size="huge"
-                  primary
-                  onClick={() => this.handleStartBtn()}
-                  disabled={ordersList.length === 0}
-                >
-                  {t('label.start')}
-                </Button>
-                {/* <Button size="huge" secondary onClick={() => this.handlePauseBtn()}>
-                  {t('label.pause')}
-                </Button> */}
+                { activeTaskType === '0' && (
+                  <Button
+                    size="huge"
+                    primary
+                    onClick={() => this.handleStartBtn()}
+                    disabled={ordersList.length === 0}
+                  >
+                    {t('label.start')}
+                  </Button>
+                )}
+                { activeTaskType === '1' && (
+                  <Button
+                    size="huge"
+                    onClick={() => this.handleContinueBtn()}
+                    disabled={ordersList.length === 0}
+                  >
+                    {t('label.continue')}
+                  </Button>
+                )}
               </div>
             </Grid.Column>
           </Grid.Row>

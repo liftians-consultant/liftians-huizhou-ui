@@ -17,11 +17,13 @@ import * as log4js from 'log4js2';
 
 const LOCATION_TYPE = 0;
 const PRODUCT_TYPE = 1;
+const CHANGE_LOCATION_TYPE = 2;
 
 const status = {
-  FIRST_LOCATION_SCAN: '20',
-  PRODUCT_SCAN: '21',
-  SECOND_LOCATION_SCAN: '22',
+  FIRST_LOCATION_SCAN: '21',
+  PRODUCT_SCAN: '22',
+  SECOND_LOCATION_SCAN: '23',
+  CHANGE_LOCATION_SCAN: '99',
 };
 
 const pickScanMessage = {
@@ -33,7 +35,12 @@ const pickScanMessage = {
 const replenishScanMessage = {
   0: 'operation.scanLocation',
   1: 'operation.scanAndPlaceProduct',
-  2: 'operation.scanLocation',
+  2: 'operation.scanLocationAgain',
+};
+
+const changeBinScanMessage = {
+  0: 'Please scan the original box location again',
+  1: 'Please scan the new location',
 };
 
 class ReplenishOperationPage extends Component {
@@ -55,6 +62,7 @@ class ReplenishOperationPage extends Component {
     stillTask: 0,
     taskStatus: 0,
     actionType: 0,
+    isChangeLocation: false,
   };
 
   log = log4js.getLogger('ReplenishOperPage');
@@ -154,13 +162,14 @@ class ReplenishOperationPage extends Component {
           if (res.success) {
             this.setState({
               taskStatus: res.data.taskProgress,
-              currentReplenishProduct: res.data.deliveryTask || {},
+              currentReplenishProduct: res.data.receiveTask || {},
               currentHighlightBox: {
                 row: res.data.shelfId,
                 column: res.data.boxId,
               },
               stillTask: res.data.stillTask,
               actionType: res.data.type,
+              isChangeLocation: false,
             }, () => {
               isReceive = true;
             });
@@ -179,17 +188,32 @@ class ReplenishOperationPage extends Component {
     }, 3000);
   }
 
+  preProcessInputValue(value) {
+    if (value === '%CHANGE_SHELF%') {
+      this.setState({ isChangeLocation: true });
+      return true;
+    }
+
+    return false;
+  }
+
   /* Production */
   handleScanKeyPress(e) {
     if (e.key === 'Enter' && e.target.value) {
       e.persist();
 
+      if (this.preProcessInputValue(e.target.value)) {
+        return;
+      }
+
       this.logInfo(`[SCANNED] ${e.target.value}`);
       const scannedValue = e.target.value;
       let scanType;
 
-      const { taskStatus } = this.state;
-      if (taskStatus === 0 || taskStatus === 2) {
+      const { isChangeLocation, taskStatus } = this.state;
+      if (isChangeLocation) {
+        scanType = CHANGE_LOCATION_TYPE;
+      } else if (taskStatus === 0 || taskStatus === 2) {
         scanType = LOCATION_TYPE;
       } else if (taskStatus === 1) {
         scanType = PRODUCT_TYPE;
@@ -200,23 +224,30 @@ class ReplenishOperationPage extends Component {
       const { t } = this.props;
       api.replenish.pushReceiveProcess(scanType, scannedValue).then((res) => {
         console.log('code:', res);
+
+        // handle isChangeLocation == true
         switch (res.code) {
+          case status.CHANGE_LOCATION_SCAN:
+            this.setState({ taskStatus: res.data.taskProgress });
+            break;
           case status.FIRST_LOCATION_SCAN:
             toast.success(t('operation.correctLocation'));
-            this.setState({ taskStatus: taskStatus + 1 });
+            this.setState({ taskStatus: res.data.taskProgress });
             break;
           case status.PRODUCT_SCAN:
             toast.success(t('operation.correctProduct'));
             this.setState({
-              taskStatus: taskStatus + 1,
+              taskStatus: res.data.taskProgress,
             });
             break;
           case status.SECOND_LOCATION_SCAN:
             toast.success(t('operation.correctLocation'));
             if (this.state.stillTask === 0) {
               toast.success(t('message.allTaskFinished'));
-              clearInterval(window.productInterval);
-              this.props.history.push('/pick-task');
+
+              setTimeout(() => {
+                this.props.history.push('/replenish-task');
+              }, 500);
             }
             this.getProductInfo();
             break;
@@ -232,7 +263,7 @@ class ReplenishOperationPage extends Component {
 
   render() {
     const { podInfo, currentReplenishProduct, taskStatus, actionType,
-      currentHighlightBox } = this.state;
+      currentHighlightBox, isChangeLocation } = this.state;
     const { t } = this.props;
 
     const scanMessage = actionType === 1 ? pickScanMessage : replenishScanMessage;
@@ -264,7 +295,7 @@ class ReplenishOperationPage extends Component {
                 <div className="scan-input-group">
                   <br />
                   <div className="scan-description">
-                    {t(scanMessage[taskStatus])}
+                    { isChangeLocation ? changeBinScanMessage[actionType] : t(scanMessage[taskStatus]) }
                   </div>
                   <div className="scan-input-holder">
                     <Input

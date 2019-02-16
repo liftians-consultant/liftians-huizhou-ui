@@ -39,6 +39,9 @@ const user = {
 
   logout: () => wmsRequest('LOGIN_OUT')
     .then(res => parseResult(res)),
+
+  setLanguage: () => wmsRequest('LANGUAGE')
+    .then(res => parseResult(res)),
 };
 
 const status = {
@@ -63,108 +66,8 @@ const station = {
   getStationPodLayout: () => wmsRequest('GET_CURRENT_POD_LAYOUT')
     .then(res => parseResult(res)),
 
-  // getStationPodLayout: () => Promise.resolve({
-  //   success: true,
-  //   data: [{
-  //     locationName: 'one',
-  //     barCode: '100123',
-  //     volume: 20,
-  //     podId: 10,
-  //     podSide: 0,
-  //     shelfId: 3,
-  //     boxId: 1,
-  //   }, {
-  //     locationName: 'one',
-  //     barCode: '100123',
-  //     volume: 20,
-  //     podId: 10,
-  //     podSide: 0,
-  //     shelfId: 4,
-  //     boxId: 2
-  //   }, {
-  //     locationName: 'one',
-  //     barCode: '100123',
-  //     volume: 20,
-  //     podId: 10,
-  //     podSide: 0,
-  //     shelfId: 5,
-  //     boxId: 2,
-  //   }, {
-  //     locationName: 'one',
-  //     barCode: '100123',
-  //     volume: 20,
-  //     podId: 10,
-  //     podSide: 0,
-  //     shelfId: 3,
-  //     boxId: 2,
-  //   }, {
-  //     locationName: 'one',
-  //     barCode: '100123',
-  //     volume: 20,
-  //     podId: 10,
-  //     podSide: 0,
-  //     shelfId: 1,
-  //     boxId: 1,
-  //   }, {
-  //     locationName: 'one',
-  //     barCode: '100123',
-  //     volume: 20,
-  //     podId: 10,
-  //     podSide: 0,
-  //     shelfId: 2,
-  //     boxId: 1,
-  //   }, {
-  //     locationName: 'one',
-  //     barCode: '100123',
-  //     volume: 20,
-  //     podId: 10,
-  //     podSide: 0,
-  //     shelfId: 2,
-  //     boxId: 2,
-  //   }, {
-  //     locationName: 'one',
-  //     barCode: '100123',
-  //     volume: 20,
-  //     podId: 10,
-  //     podSide: 0,
-  //     shelfId: 2,
-  //     boxId: 3,
-  //   }],
-  // }),
-
   getStationProductInfo: () => wmsRequest('GET_CURRENT_PRODUCT_INFO')
     .then(res => parseResult(res, ['13', '14'])),
-
-  // getStationProductInfo: () => Promise.resolve({
-  //   success: true,
-  //   data: {
-  //     podId: 10,
-  //     podSide: 1,
-  //     shelfId: 3,
-  //     boxId: 1,
-  //     binBarCode: '12121',
-  //     binColor: '111',
-  //     deliveryTask: {
-  //       stat: 0,
-  //       quantity: 1.00456,
-  //       productId: 4,
-  //       productName: 'Kombucha is the best',
-  //       productBarCode: 'D8V203AC2B',
-  //       batch: '005',
-  //       updateTime: 1546528763387,
-  //       warehouse: 'H180',
-  //       barCode: '8656657',
-  //       manufacturer: 2,
-  //       unit: 'GM',
-  //       areaId: 0,
-  //       createTime: 1546528763387,
-  //       plant: 'HT001',
-  //       id: 0,
-  //       locationCode: '1000023061',
-  //       userId: 0,
-  //     },
-  //   },
-  // }),
 
   startStationOperation: operationType => wmsRequest('START_STATION_OPERATION', operationType)
     .then(res => parseResult(res)),
@@ -202,9 +105,8 @@ const pick = {
     binBarCode,
   }).then(res => parseResult(res)),
 
-  // bindBinToOrder: (orderBarCode, binBarCode) => Promise.resolve({
-  //   success: true,
-  // }),
+  cancelDeliveryOrder: orderId => wmsRequest('CANCEL_DELIVERY_ORDER', orderId)
+    .then(res => parseResult(res)),
 };
 
 const replenish = {
@@ -222,12 +124,12 @@ const replenish = {
     .then(res => parseResult(res)),
 
   getReceiveProductInfo: () => wmsRequest('GET_RECEIVE_PRODUCT_INFO')
-    .then(res => parseResult(res), ['13', '14']),
+    .then(res => parseResult(res, ['13', '14'])),
 
   pushReceiveProcess: (type, barCode) => wmsRequest('PUSH_RECEIVE_PROCESS', {
     type,
     barCode,
-  }).then(res => parseResult(res), ['20', '21', '22']),
+  }).then(res => parseResult(res, ['21', '22', '23', '99'])),
 };
 
 const inventory = {

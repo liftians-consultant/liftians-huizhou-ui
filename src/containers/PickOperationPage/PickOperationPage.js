@@ -233,8 +233,10 @@ class PickOperationPage extends Component {
           toast.success('Correct Location');
           if (this.state.stillTask === 0) {
             toast.success('All Task Finished');
-            clearInterval(window.productInterval);
-            this.props.history.push('/pick-task');
+
+            setTimeout(() => {
+              this.props.history.push('/pick-task');
+            }, 500);
           }
           this.getProductInfo();
         }

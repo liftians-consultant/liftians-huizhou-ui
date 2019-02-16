@@ -12,17 +12,17 @@ export function parseResult(result, byPassCode = []) {
       success: true,
       data: result.data.liftians.data,
     };
-  } else {
-    const errorMessage = `Error Code: ${res.result}, \nMessage: ${res.data}`;
-
-    if (!byPassCode.includes(res.result)) {
-      toast.error(errorMessage);
-    }
-
-    return {
-      success: false,
-      code: res.result,
-      data: errorMessage,
-    };
   }
+  const errorMessage = `Error Code: ${res.result}, \nMessage: ${res.data}`;
+
+  if (!byPassCode.includes(res.result)) {
+    toast.error(errorMessage);
+  }
+
+  return {
+    success: false,
+    code: res.result,
+    message: errorMessage,
+    data: res.data,
+  };
 }
