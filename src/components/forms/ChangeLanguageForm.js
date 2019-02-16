@@ -21,8 +21,8 @@ const ChangeLanguageForm = ({ t, value, onLanguageChange, onSubmit }) => (
     />
     <Form.Radio
       label="简体中文"
-      value="zh"
-      checked={value === 'zh'}
+      value="cn"
+      checked={value === 'cn'}
       onChange={onLanguageChange}
     />
     <Form.Button primary>{t('button.submit')}</Form.Button>
