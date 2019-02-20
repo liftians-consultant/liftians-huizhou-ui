@@ -258,6 +258,9 @@ class PickOperationPage extends Component {
         <Dimmer active={this.state.loading}>
           <Loader content={t('operation.waitingForPod')} indeterminate size="massive" />
         </Dimmer>
+        <div className="page-title">
+          {t('label.pickOperation')}
+        </div>
         <Grid>
           <Grid.Row>
             <Grid.Column width={5}>

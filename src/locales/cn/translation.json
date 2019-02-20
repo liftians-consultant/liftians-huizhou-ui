@@ -60,6 +60,8 @@
   "//": "Change Language Form",
   "label.selectedLanguage": "选择语言:",
   "//": "Operation Common",
+  "label.pickOperation": "出库操作",
+  "label.replenishOperation": "入库操作",
   "operation.waitingForPod": "等待货物到达",
   "operation.scanLocation": "请扫描架位条码",
   "operation.scanProduct": "请扫描物料标签",

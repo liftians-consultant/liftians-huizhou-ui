@@ -296,6 +296,9 @@ class ReplenishTaskPage extends Component {
 
     return (
       <div className="ui replenish-task-page-container">
+        <div className="page-title">
+          {t('label.replenishmentList')}
+        </div>
         <Grid>
           <Grid.Row>
             <Grid.Column width={16}>

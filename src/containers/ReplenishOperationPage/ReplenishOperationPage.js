@@ -39,8 +39,8 @@ const replenishScanMessage = {
 };
 
 const changeBinScanMessage = {
-  0: 'Please scan the original box location again',
-  1: 'Please scan the new location',
+  1: 'Please scan the original box location again',
+  2: 'Please scan the new location',
 };
 
 class ReplenishOperationPage extends Component {
@@ -189,27 +189,35 @@ class ReplenishOperationPage extends Component {
   }
 
   preProcessInputValue(value) {
-    if (value === '%CHANGE_SHELF%') {
+    if (value === 'change' || value === 'empty') {
       this.setState({ isChangeLocation: true });
       return true;
+    }
+
+    if (value === 'empty') {
+      this.setState({ isChangeLocation: true });
     }
 
     return false;
   }
 
-  /* Production */
   handleScanKeyPress(e) {
     if (e.key === 'Enter' && e.target.value) {
       e.persist();
 
-      if (this.preProcessInputValue(e.target.value)) {
+      let scannedValue = e.target.value;
+
+      this.setFocusToScanInput();
+
+      if (this.preProcessInputValue(scannedValue)) {
         return;
       }
 
-      this.logInfo(`[SCANNED] ${e.target.value}`);
-      const scannedValue = e.target.value;
-      let scanType;
+      if (scannedValue === 'empty') {
+        scannedValue = null;
+      }
 
+      let scanType;
       const { isChangeLocation, taskStatus } = this.state;
       if (isChangeLocation) {
         scanType = CHANGE_LOCATION_TYPE;
@@ -222,13 +230,18 @@ class ReplenishOperationPage extends Component {
       }
 
       const { t } = this.props;
+      console.log(`scanType: ${scanType}, scannedValue: ${scannedValue}`);
       api.replenish.pushReceiveProcess(scanType, scannedValue).then((res) => {
         console.log('code:', res);
 
         // handle isChangeLocation == true
         switch (res.code) {
           case status.CHANGE_LOCATION_SCAN:
-            this.setState({ taskStatus: res.data.taskProgress });
+            this.setState({
+              taskStatus: res.data.taskProgress,
+              isChangeLocation: false,
+            });
+            this.getProductInfo();
             break;
           case status.FIRST_LOCATION_SCAN:
             toast.success(t('operation.correctLocation'));
@@ -255,8 +268,6 @@ class ReplenishOperationPage extends Component {
             break;
         }
       });
-
-      this.setFocusToScanInput();
     }
   }
 
@@ -273,6 +284,9 @@ class ReplenishOperationPage extends Component {
         <Dimmer active={this.state.loading}>
           <Loader content={t('operation.waitingForPod')} indeterminate size="massive" />
         </Dimmer>
+        <div className="page-title">
+          {t('label.replenishOperation')}
+        </div>
         <Grid>
           <Grid.Row>
             <Grid.Column width={5}>

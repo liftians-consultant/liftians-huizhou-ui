@@ -374,6 +374,9 @@ class PickTaskPage extends Component {
 
     return (
       <div className="ui pick-task-page-container">
+        <div className="page-title">
+          {t('label.pickingList')}
+        </div>
         <Grid>
           <Grid.Row>
             <Grid.Column width={16}>
