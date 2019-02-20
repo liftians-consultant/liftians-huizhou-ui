@@ -133,7 +133,7 @@ class SideNavigation extends Component {
         </div>
         <div className="nav-buffer" />
         <div className="nav-item-container nav-bottom">
-          { this.renderChangeBinBtn() }
+          {/* { this.renderChangeBinBtn() } */}
           <Button className="nav-btn" onClick={this.handleLogoutBtnClicked}>
             {t('label.logout')}
           </Button>

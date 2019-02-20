@@ -8,7 +8,7 @@ import ServerSettingModal from 'components/common/ServerSettingModal/ServerSetti
 import { login } from 'redux/actions/authAction';
 import { activateStation } from 'redux/actions/stationAction';
 
-import logo from 'assets/images/assembly_logo_trans.png';
+import logo from 'assets/images/asm_logo.png';
 
 const style = {
   position: 'absolute',
@@ -59,7 +59,7 @@ class LoginPage extends Component {
           verticalAlign="middle"
         >
           <Grid.Column style={{ maxWidth: 450 }}>
-            <Image src={logo} size="huge" centered />
+            <Image src={logo} size="medium" centered />
             <Segment>
               <LoginForm
                 submit={this.submit}
