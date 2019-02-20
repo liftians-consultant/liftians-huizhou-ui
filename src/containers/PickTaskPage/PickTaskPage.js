@@ -11,7 +11,7 @@ import api from 'api';
 import OrderListTable from 'components/common/OrderListTable/OrderListTable';
 import OperationTaskMenu from 'components/OperationTaskMenu/OperationTaskMenu';
 import InputDialogModal from 'components/common/InputDialogModal';
-
+import { clearAllInterval } from 'utils/utils';
 import { setStationTaskType, checkCurrentUnFinishTask } from 'redux/actions/stationAction';
 import { getTaskStatus, getCancelReasonList } from 'redux/actions/statusAction';
 import { resetTaskPage, setRemoveDialog } from 'redux/actions/pickTaskAction';
@@ -101,7 +101,7 @@ class PickTaskPage extends Component {
   }
 
   componentWillMount() {
-    clearInterval(window.productInterval);
+    clearAllInterval();
 
     this.translateTableColumn();
 

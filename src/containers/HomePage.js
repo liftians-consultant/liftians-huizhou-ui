@@ -15,6 +15,7 @@ import MenuButton from 'components/common/MenuButton/MenuButton';
 import * as actions from 'redux/actions/authAction';
 import { getUserInfoById } from 'redux/actions/userAction';
 import { activateStation, checkCurrentUnFinishTask } from 'redux/actions/stationAction';
+import { clearAllInterval } from 'utils/utils';
 
 let logSetFlag = false;
 class HomePage extends Component {
@@ -28,7 +29,7 @@ class HomePage extends Component {
   }
 
   componentWillMount() {
-    clearInterval(window.productInterval);
+    clearAllInterval();
 
     this.props.activateStation(this.props.stationId, this.props.userId).then((res) => {
       if (res) {

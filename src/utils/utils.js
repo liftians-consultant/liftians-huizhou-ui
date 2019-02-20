@@ -26,3 +26,10 @@ export function parseResult(result, byPassCode = []) {
     data: res.data,
   };
 }
+
+export function clearAllInterval() {
+  const intervalLimit = 9999;
+  for (let i = 1; i < intervalLimit; i++) {
+    window.clearInterval(i);
+  }
+}

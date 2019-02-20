@@ -15,6 +15,7 @@ import InputDialogModal from 'components/common/InputDialogModal';
 import { setStationTaskType } from 'redux/actions/stationAction';
 import { getTaskStatus, getCancelReasonList } from 'redux/actions/statusAction';
 import { resetTaskPage, setRemoveDialog } from 'redux/actions/pickTaskAction';
+import { clearAllInterval } from 'utils/utils';
 
 import './ReplenishTaskPage.css';
 import * as log4js from 'log4js2';
@@ -96,7 +97,7 @@ class ReplenishTaskPage extends Component {
 
 
   componentWillMount() {
-    clearInterval(window.productInterval);
+    clearAllInterval();
 
     this.translateTableColumn();
 
