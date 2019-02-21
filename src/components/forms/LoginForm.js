@@ -26,8 +26,8 @@ class LoginForm extends React.Component {
       this.setState({ loading: true });
       this.props
         .submit(this.state.data)
-        .then(() => {
-          this.setState({ loading: false });
+        .then((res) => {
+          if (!res) this.setState({ loading: false });
         }).catch((err) => {
           console.log(err);
           let message = 'Login Error';
