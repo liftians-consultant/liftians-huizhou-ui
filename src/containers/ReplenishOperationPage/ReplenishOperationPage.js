@@ -315,15 +315,15 @@ class ReplenishOperationPage extends Component {
     });
   }
 
-  handleWsOpen() {
+  handleWsOpen = () => {
     console.log('[WebSocket] connected');
   }
 
-  handleWsClose() {
+  handleWsClose = () => {
     console.log('[WebSocket] Closed');
   }
 
-  handleWsData(data) {
+  handleWsData = (data) => {
     console.log('[WebSocket] Data received:', data);
   }
 
@@ -344,8 +344,8 @@ class ReplenishOperationPage extends Component {
           onClose={this.handleWsClose}
           reconnect
           debug
-          ref={(Websocket) => {
-            this.refWebSocket = Websocket;
+          ref={(websocket) => {
+            this.refWebSocket = websocket;
           }}
         />
         <Dimmer active={this.state.loading}>
