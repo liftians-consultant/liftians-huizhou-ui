@@ -13,7 +13,7 @@ const OrderListTable = ({ columns, listData, loading, onFetchData, pages, pagina
     loading={loading}
     onFetchData={onFetchData}
     manual
-    resizable={false}
+    // resizable={false}
     filterable={false}
     showPageJump={pagination}
     showPagination={pagination}

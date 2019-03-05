@@ -32,6 +32,7 @@
     "react-scripts": "2.1.1",
     "react-table": "^6.8.6",
     "react-toastify": "^4.4.3",
+    "react-websocket": "^2.0.1",
     "recompose": "^0.30.0",
     "redux": "^4.0.1",
     "redux-logger": "^3.0.6",

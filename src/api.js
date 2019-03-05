@@ -39,9 +39,6 @@ const user = {
 
   logout: () => wmsRequest('LOGIN_OUT')
     .then(res => parseResult(res)),
-
-  setLanguage: () => wmsRequest('LANGUAGE')
-    .then(res => parseResult(res)),
 };
 
 const status = {
@@ -50,6 +47,11 @@ const status = {
 
   getCancelReason: () => wmsRequest('STAT_TYPE', 'TaskStat')
     .then(res => parseResult(res)),
+
+  getStationTaskStatus: () => wmsRequest('LANGUAGE', {
+    type: 'StationTaskStat',
+    langId: null,
+  }).then(res => parseResult(res)),
 };
 
 const station = {
@@ -82,7 +84,7 @@ const pick = {
     parameter: [stationId],
   }),
 
-  retrieveOrderFromAsm: barCode => wmsRequest('GET_ORDER_LABEL', barCode)
+  retrieveOrderFromAsm: barCode => wmsRequest('GET_ORDER_LABEL', encodeURI(barCode))
     .then(res => parseResult(res)),
 
   getStationOrderList: (stationId, taskStat, pageNum, pageSize) => wmsRequest('GET_ORDER_LIST', {
@@ -97,12 +99,12 @@ const pick = {
 
   pushDeliveryProcess: (type, barCode) => wmsRequest('PUSH_DELIVERY_PROCESS', {
     type,
-    barCode,
+    barCode: encodeURI(barCode),
   }).then(res => parseResult(res, ['20', '21', '22'])),
 
   bindBinToOrder: (orderBarCode, binBarCode) => wmsRequest('DELIVERY_BIND_BIN', {
-    orderBarCode,
-    binBarCode,
+    orderBarCode: encodeURI(orderBarCode),
+    binBarCode: encodeURI(binBarCode),
   }).then(res => parseResult(res)),
 
   cancelDeliveryOrder: orderId => wmsRequest('CANCEL_DELIVERY_ORDER', orderId)
@@ -110,7 +112,7 @@ const pick = {
 };
 
 const replenish = {
-  retreiveReceiveFromAsm: barCode => wmsRequest('GET_RECEIVE_LABEL', barCode)
+  retreiveReceiveFromAsm: barCode => wmsRequest('GET_RECEIVE_LABEL', encodeURI(barCode))
     .then(res => parseResult(res)),
 
   getStationReplenishList: (stationId, taskStat, pageNum, pageSize) => wmsRequest('GET_REPLENISH_LIST', {
@@ -124,12 +126,12 @@ const replenish = {
     .then(res => parseResult(res)),
 
   getReceiveProductInfo: () => wmsRequest('GET_RECEIVE_PRODUCT_INFO')
-    .then(res => parseResult(res, ['13', '14'])),
+    .then(res => parseResult(res, ['13', '14', '35'])),
 
   pushReceiveProcess: (type, barCode) => wmsRequest('PUSH_RECEIVE_PROCESS', {
     type,
     barCode,
-  }).then(res => parseResult(res, ['21', '22', '23', '99'])),
+  }).then(res => parseResult(res, ['15', '16', '99'], ['21', '22', '23', '26', '28', '29'])),
 };
 
 const inventory = {

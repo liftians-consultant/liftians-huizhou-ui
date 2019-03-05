@@ -6,7 +6,7 @@ import ImageNotFound from '../../../assets/images/no_photo_available.jpg';
 
 const productImgBaseUrl = process.env.REACT_APP_IMAGE_BASE_URL;
 
-const ProductInfoDisplay = ({ product, amount, currentBarcode, showBox, binColor, unit }) => {
+const ProductInfoDisplay = ({ product, amount, currentBarcode, showBox, binColor, unit, taskStatus }) => {
   const imageUrl = `${productImgBaseUrl}${product.productID}.png`;
 
   const amountLength = amount.toString().length;
@@ -20,6 +20,9 @@ const ProductInfoDisplay = ({ product, amount, currentBarcode, showBox, binColor
 
   return (
     <div className="product-info-block">
+      <div className="task-status">
+        {taskStatus}
+      </div>
       <div className="product-remain-container">
         <span className="remain-amount" style={({ fontSize: amountFontSize })}>
           {amount}
@@ -66,6 +69,7 @@ ProductInfoDisplay.defaultProps = {
   showBox: false,
   binColor: 'fff',
   unit: 'item',
+  taskStatus: '',
 };
 
 ProductInfoDisplay.propTypes = {
@@ -78,6 +82,7 @@ ProductInfoDisplay.propTypes = {
     PropTypes.number,
   ]),
   unit: PropTypes.string,
+  taskStatus: PropTypes.string,
 };
 
 export default ProductInfoDisplay;

@@ -6,6 +6,7 @@ import { withNamespaces } from 'react-i18next';
 import { Grid, Button, Input, Icon } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
 import _ from 'lodash';
+import moment from 'moment';
 
 import api from 'api';
 import OrderListTable from 'components/common/OrderListTable/OrderListTable';
@@ -83,6 +84,8 @@ class ReplenishTaskPage extends Component {
 
   OrdersTableColumn = [];
 
+  FinishTableColumn = [];
+
   constructor() {
     super();
 
@@ -122,19 +125,25 @@ class ReplenishTaskPage extends Component {
 
   translateTableColumn = () => {
     const { t } = this.props;
+
     const newColumn = this.NewOrderTableColumn.map((obj) => {
       obj.Header = t(obj.key);
       return obj;
     });
 
+    this.NewOrderTableColumn = [...newColumn];
+    newColumn.pop();
+    this.OrdersTableColumn = [...newColumn];
+    newColumn.push({
+      Header: t('label.completeTime'),
+      accessor: 'completetime',
+    });
+    this.FinishTableColumn = [...newColumn];
+
     const newOptions = this.taskTypeOption.map((obj) => {
       obj.text = t(obj.tranlationKey);
       return obj;
     });
-
-    this.NewOrderTableColumn = [...newColumn];
-    newColumn.pop();
-    this.OrdersTableColumn = newColumn;
 
     this.taskTypeOption = [...newOptions];
   }
@@ -145,6 +154,10 @@ class ReplenishTaskPage extends Component {
     const array = orderList.map((obj) => {
       if (!taskStatusList[obj.stat]) return obj;
       obj.statusName = taskStatusList[obj.stat].name;
+
+      if (obj.completetime) {
+        obj.completetime = moment(obj.completetime).format(process.env.REACT_APP_TABLE_DATE_FORMAT);
+      }
       return obj;
     });
 
@@ -153,7 +166,11 @@ class ReplenishTaskPage extends Component {
 
   preProcessInputValue(value) {
     if (value === 'START') {
-      this.handleStartBtn();
+      if (this.state.ordersList.length === 0) {
+        toast.info(this.props.t('message.error.noNewOrder'));
+      } else {
+        this.handleStartBtn();
+      }
       return true;
     }
 
@@ -324,7 +341,7 @@ class ReplenishTaskPage extends Component {
                   <OrderListTable
                     listData={ordersList}
                     loading={tableLoading}
-                    columns={this.OrdersTableColumn}
+                    columns={activeTaskType === '5' ? this.FinishTableColumn : this.OrdersTableColumn}
                     onFetchData={this.handleFetchTableData}
                     pages={pages}
                   />

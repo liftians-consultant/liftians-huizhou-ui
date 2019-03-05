@@ -6,15 +6,16 @@ import { withNamespaces } from 'react-i18next';
 import { Grid, Button, Input, Icon } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
 import _ from 'lodash';
+import moment from 'moment';
 
 import api from 'api';
 import OrderListTable from 'components/common/OrderListTable/OrderListTable';
 import OperationTaskMenu from 'components/OperationTaskMenu/OperationTaskMenu';
 import InputDialogModal from 'components/common/InputDialogModal';
-import { clearAllInterval } from 'utils/utils';
 import { setStationTaskType, checkCurrentUnFinishTask } from 'redux/actions/stationAction';
 import { getTaskStatus, getCancelReasonList } from 'redux/actions/statusAction';
 import { resetTaskPage, setRemoveDialog } from 'redux/actions/pickTaskAction';
+import { clearAllInterval } from 'utils/utils';
 
 import './PickTaskPage.css';
 import * as log4js from 'log4js2';
@@ -78,6 +79,12 @@ class PickTaskPage extends Component {
       key: 'label.status',
       accessor: 'statusName',
     }, {
+      key: 'label.type',
+      accessor: 'type',
+    }, {
+      key: 'label.binBarcode',
+      accessor: 'binBarCode',
+    }, {
       key: 'label.remove',
       Cell: row => (
         <Icon name="delete" size="big" onClick={() => this.handleRemoveOrder(row.index)} />
@@ -87,6 +94,8 @@ class PickTaskPage extends Component {
   ];
 
   OrdersTableColumn = [];
+
+  FinishTableColumn = [];
 
   constructor() {
     super();
@@ -137,24 +146,38 @@ class PickTaskPage extends Component {
       return obj;
     });
 
+    this.NewOrderTableColumn = [...newColumn];
+    newColumn.pop(); // remove delete column
+    this.OrdersTableColumn = [...newColumn];
+    newColumn.pop(); // remove barcode column
+    newColumn.pop(); // remove type column
+    newColumn.push({
+      Header: t('label.completeTime'),
+      accessor: 'completetime',
+    });
+    this.FinishTableColumn = [...newColumn];
+
     const newOptions = this.taskTypeOption.map((obj) => {
       obj.text = t(obj.tranlationKey);
       return obj;
     });
 
-    this.NewOrderTableColumn = [...newColumn];
-    newColumn.pop();
-    this.OrdersTableColumn = newColumn;
-
     this.taskTypeOption = [...newOptions];
   }
 
   transformOrderRecord(orderList) {
-    const { taskStatusList } = this.props;
+    const { taskStatusList, t } = this.props;
 
     const array = orderList.map((obj) => {
       if (!taskStatusList[obj.stat]) return obj;
       obj.statusName = taskStatusList[obj.stat].name;
+
+      if (obj.completetime) {
+        obj.completetime = moment(obj.completetime).format(process.env.REACT_APP_TABLE_DATE_FORMAT);
+      }
+
+      obj.type = obj.type === 1 ? t('label.taskType.normal') : t('label.taskType.watch');
+
       return obj;
     });
 
@@ -293,6 +316,7 @@ class PickTaskPage extends Component {
       toast.success(this.props.t('message.binBindToOrder', { orderBarCode, binBarCode }));
       this.setState({ unbindedOrderList }, () => {
         if (unbindedOrderList.length === 0) {
+          this.getStationOrderList([1], 1);
           this.focusInput();
         }
       });
@@ -402,7 +426,7 @@ class PickTaskPage extends Component {
                   <OrderListTable
                     listData={ordersList}
                     loading={tableLoading}
-                    columns={this.OrdersTableColumn}
+                    columns={activeTaskType === '5' ? this.FinishTableColumn : this.OrdersTableColumn}
                     onFetchData={this.handleFetchTableData}
                     pages={pages}
                   />

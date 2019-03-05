@@ -195,7 +195,7 @@ class PickOperationPage extends Component {
         this.getPodInfo();
         clearInterval(window.productInterval);
       }
-    }, 3000);
+    }, 500);
   }
 
   /* Production */
@@ -260,6 +260,11 @@ class PickOperationPage extends Component {
         </Dimmer>
         <div className="page-title">
           {t('label.pickOperation')}
+        </div>
+        <div className="order-title">
+          OrderNo:
+          {' '}
+          {currentPickProduct.barCode}
         </div>
         <Grid>
           <Grid.Row>

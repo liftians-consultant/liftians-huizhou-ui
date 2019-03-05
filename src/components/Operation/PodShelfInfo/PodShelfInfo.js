@@ -12,9 +12,8 @@ const locationBarcodeStyle = {
 const PodShelfInfo = props => (
   <div className="pod-shelf-info-display-container">
     <div className="pod-info-block">
-      <span>{`Pod #${props.podInfo.podId} - ${props.podInfo.podSide === 0 ? 'A' : 'B'}`}</span>
+      <span>{`Pod #${props.podInfo.podId} - ${props.podInfo.podSide === 0 ? 'A' : 'B'} (${props.podInfo.locationBarcode})`}</span>
       <br />
-      <span style={locationBarcodeStyle}>{props.podInfo.locationBarcode}</span>
     </div>
     <Segment.Group>
       <Segment>
@@ -35,11 +34,13 @@ PodShelfInfo.propTypes = {
   highlightBox: PropTypes.object.isRequired,
   onShortageClicked: PropTypes.func,
   showAdditionBtns: PropTypes.bool,
+  actionMessage: PropTypes.string,
 };
 
 PodShelfInfo.defaultProps = {
   showAdditionBtns: false,
   onShortageClicked: () => {},
+  actionMessage: '',
 };
 
 export default PodShelfInfo;

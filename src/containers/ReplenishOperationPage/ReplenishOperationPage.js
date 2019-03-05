@@ -4,14 +4,18 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { compose } from 'recompose';
 import { withNamespaces } from 'react-i18next';
-import { Grid, Dimmer, Loader, Input } from 'semantic-ui-react';
+import { Grid, Dimmer, Loader, Input, Button } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
+import Websocket from 'react-websocket';
+import i18n from 'i18n';
 
+import appConfig from 'services/AppConfig';
 import api from 'api';
 import PodShelfInfo from 'components/Operation/PodShelfInfo/PodShelfInfo';
 import ProductInfoDisplay from 'components/common/ProductInfoDisplay/ProductInfoDisplay';
 
 import { checkCurrentUnFinishTask } from 'redux/actions/stationAction';
+import { getStationTaskStatus } from 'redux/actions/statusAction';
 import './ReplenishOperationPage.css';
 import * as log4js from 'log4js2';
 
@@ -29,7 +33,7 @@ const status = {
 const pickScanMessage = {
   0: 'operation.scanLocation',
   1: 'operation.pickAndScanProduct',
-  2: 'operation.scanLocation',
+  2: 'operation.scanLocationAgain',
 };
 
 const replenishScanMessage = {
@@ -39,8 +43,9 @@ const replenishScanMessage = {
 };
 
 const changeBinScanMessage = {
-  1: 'Please scan the original box location again',
-  2: 'Please scan the new location',
+  28: '請再次掃描舊架位條碼',
+  1: '請掃描新架位條碼',
+  26: '請掃描新架位條碼',
 };
 
 class ReplenishOperationPage extends Component {
@@ -62,10 +67,15 @@ class ReplenishOperationPage extends Component {
     stillTask: 0,
     taskStatus: 0,
     actionType: 0,
+    stationTaskStat: null,
     isChangeLocation: false,
   };
 
+  wsUrl = `${appConfig.getWsUrl()}/api`;
+
   log = log4js.getLogger('ReplenishOperPage');
+
+  language = i18n.language;
 
   constructor(props) {
     super(props);
@@ -75,10 +85,15 @@ class ReplenishOperationPage extends Component {
 
     // Bind the this context to the handler function
     this.handleScanKeyPress = this.handleScanKeyPress.bind(this);
+    this.handleWsData = this.handleWsData.bind(this);
+    this.handleWsOpen = this.handleWsOpen.bind(this);
+    this.handleWsClose = this.handleWsClose.bind(this);
   }
 
   componentWillMount() {
     this.logInfo('Enter ReplenishOperationPage');
+
+    this.props.getStationTaskStatus();
 
     // TODO: Subscribe to websocket
     this.listenToWebSocket();
@@ -169,6 +184,7 @@ class ReplenishOperationPage extends Component {
               },
               stillTask: res.data.stillTask,
               actionType: res.data.type,
+              stationTaskStat: res.data.stationTaskStat,
               isChangeLocation: false,
             }, () => {
               isReceive = true;
@@ -185,17 +201,13 @@ class ReplenishOperationPage extends Component {
         this.getPodInfo();
         clearInterval(window.productInterval);
       }
-    }, 3000);
+    }, 500);
   }
 
   preProcessInputValue(value) {
-    if (value === 'change' || value === 'empty') {
-      this.setState({ isChangeLocation: true });
+    if (value === 'change') {
+      this.setState(prevState => ({ isChangeLocation: !prevState.isChangeLocation }));
       return true;
-    }
-
-    if (value === 'empty') {
-      this.setState({ isChangeLocation: true });
     }
 
     return false;
@@ -213,12 +225,15 @@ class ReplenishOperationPage extends Component {
         return;
       }
 
-      if (scannedValue === 'empty') {
+      let scanType;
+      const { taskStatus, stationTaskStat } = this.state;
+      let { isChangeLocation } = this.state;
+
+      if (scannedValue === 'empty' && stationTaskStat !== 26) {
+        isChangeLocation = true;
         scannedValue = null;
       }
 
-      let scanType;
-      const { isChangeLocation, taskStatus } = this.state;
       if (isChangeLocation) {
         scanType = CHANGE_LOCATION_TYPE;
       } else if (taskStatus === 0 || taskStatus === 2) {
@@ -232,60 +247,117 @@ class ReplenishOperationPage extends Component {
       const { t } = this.props;
       console.log(`scanType: ${scanType}, scannedValue: ${scannedValue}`);
       api.replenish.pushReceiveProcess(scanType, scannedValue).then((res) => {
-        console.log('code:', res);
+        console.log(`[response] code: ${res.code}, taskProgress: ${res.data.taskProgress}`);
 
-        // handle isChangeLocation == true
-        switch (res.code) {
-          case status.CHANGE_LOCATION_SCAN:
-            this.setState({
-              taskStatus: res.data.taskProgress,
-              isChangeLocation: false,
-            });
+        if (res.success) {
+          if (isChangeLocation) {
             this.getProductInfo();
-            break;
-          case status.FIRST_LOCATION_SCAN:
-            toast.success(t('operation.correctLocation'));
-            this.setState({ taskStatus: res.data.taskProgress });
-            break;
-          case status.PRODUCT_SCAN:
-            toast.success(t('operation.correctProduct'));
-            this.setState({
-              taskStatus: res.data.taskProgress,
-            });
-            break;
-          case status.SECOND_LOCATION_SCAN:
-            toast.success(t('operation.correctLocation'));
-            if (this.state.stillTask === 0) {
-              toast.success(t('message.allTaskFinished'));
+            return;
+          }
+          switch (res.code) {
+            case status.CHANGE_LOCATION_SCAN:
+              this.setState({
+                taskStatus: res.data.taskProgress,
+              });
+              this.getProductInfo();
+              break;
+            case status.FIRST_LOCATION_SCAN:
+              toast.success(t('operation.correctLocation'));
+              this.setState({ taskStatus: res.data.taskProgress });
+              break;
+            case status.PRODUCT_SCAN:
+              toast.success(t('operation.correctProduct'));
+              this.setState({
+                taskStatus: res.data.taskProgress,
+              });
+              break;
+            case status.SECOND_LOCATION_SCAN:
+            case '1':
+              toast.success(t('operation.correctLocation'));
+              if (this.state.stillTask === 0) {
+                toast.success(t('message.allTaskFinished'));
 
-              setTimeout(() => {
-                this.props.history.push('/replenish-task');
-              }, 500);
-            }
-            this.getProductInfo();
-            break;
-          default:
-            break;
+                setTimeout(() => {
+                  this.props.history.push('/replenish-task');
+                }, 500);
+              }
+              this.getProductInfo();
+              break;
+            default:
+              break;
+          }
+        } else {
+          toast.error(`Error Code: ${res.code}, \nMessage: ${res.data.resultDesc}`);
         }
+
+        this.setState({ isChangeLocation: false });
       });
     }
+  }
+
+  handleChangeLocation = () => {
+    this.handleScanKeyPress({
+      key: 'Enter',
+      target: {
+        value: 'change',
+      },
+      persist: () => {},
+    });
+  }
+
+  handleEmptyLocation = () => {
+    this.handleScanKeyPress({
+      key: 'Enter',
+      target: {
+        value: 'empty',
+      },
+      persist: () => {},
+    });
+  }
+
+  handleWsOpen() {
+    console.log('[WebSocket] connected');
+  }
+
+  handleWsClose() {
+    console.log('[WebSocket] Closed');
+  }
+
+  handleWsData(data) {
+    console.log('[WebSocket] Data received:', data);
   }
 
 
   render() {
     const { podInfo, currentReplenishProduct, taskStatus, actionType,
-      currentHighlightBox, isChangeLocation } = this.state;
-    const { t } = this.props;
+      currentHighlightBox, isChangeLocation, stationTaskStat } = this.state;
+    const { t, stationTaskStatus } = this.props;
 
     const scanMessage = actionType === 1 ? pickScanMessage : replenishScanMessage;
 
     return (
       <div className="replenish-operation-page">
+        <Websocket
+          url={this.wsUrl}
+          onMessage={this.handleWsData}
+          onOpen={this.handleWsOpen}
+          onClose={this.handleWsClose}
+          reconnect
+          debug
+          ref={(Websocket) => {
+            this.refWebSocket = Websocket;
+          }}
+        />
         <Dimmer active={this.state.loading}>
           <Loader content={t('operation.waitingForPod')} indeterminate size="massive" />
         </Dimmer>
         <div className="page-title">
           {t('label.replenishOperation')}
+        </div>
+        <div className="order-title">
+          OrderNo:
+          {' '}
+          {currentReplenishProduct.barCode}
         </div>
         <Grid>
           <Grid.Row>
@@ -304,12 +376,13 @@ class ReplenishOperationPage extends Component {
                 amount={currentReplenishProduct.quantity}
                 currentBarcode={currentReplenishProduct.productBarCode}
                 unit={currentReplenishProduct.unit}
+                taskStatus={stationTaskStat === null ? '' : stationTaskStatus[stationTaskStat][this.language]}
               />
               <div className="action-group-container">
                 <div className="scan-input-group">
                   <br />
                   <div className="scan-description">
-                    { isChangeLocation ? changeBinScanMessage[actionType] : t(scanMessage[taskStatus]) }
+                    { isChangeLocation ? changeBinScanMessage[stationTaskStat] : t(scanMessage[taskStatus]) }
                   </div>
                   <div className="scan-input-holder">
                     <Input
@@ -317,6 +390,19 @@ class ReplenishOperationPage extends Component {
                       ref={this.scanInputRef}
                       onKeyPress={this.handleScanKeyPress}
                     />
+                  </div>
+                  <div>
+                    <Button primary size="medium" onClick={() => this.handleChangeLocation()}>
+                      {isChangeLocation ? t('label.cancelChangeLocation') : t('label.changeLocation')}
+                    </Button>
+                    <Button
+                      primary
+                      size="medium"
+                      onClick={() => this.handleEmptyLocation()}
+                      // disabled={stationTaskStat === 26}
+                    >
+                      {t('label.changeShelf')}
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -334,14 +420,16 @@ ReplenishOperationPage.propTypes = {
   }).isRequired,
 };
 
-// function mapStateToProps(state) {
-//   return {
-//   };
-// }
+function mapStateToProps(state) {
+  return {
+    stationTaskStatus: state.status.stationTaskStatus,
+  };
+}
 
 export default compose(
-  connect(null, {
+  connect(mapStateToProps, {
     checkCurrentUnFinishTask,
+    getStationTaskStatus,
   }),
   withNamespaces(),
 )(ReplenishOperationPage);

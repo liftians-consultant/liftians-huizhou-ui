@@ -5,11 +5,19 @@
     color: #fff;
   }
 
+  .product-info-container {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .task-status {
+    font-size: 1.5rem;
+  }
+
   .product-remain-container {
     // line-height: 6em;
     margin: 1em 0;
     background: teal;
-    // width: 300px;
     border: 3px solid #fff;
     text-align: center;
     display: inline-block;
@@ -26,11 +34,6 @@
       font-size: 2em;
       line-height: 1.5em;
     }
-  }
-
-  .product-info-container {
-    display: flex;
-    flex-direction: row;
   }
 
   .product-name-container {
