@@ -14,12 +14,11 @@ const PodShelfInfo = props => (
         <PodShelf podInfo={props.podInfo} highlightBox={props.highlightBox} />
       </Segment>
     </Segment.Group>
-    { props.showAdditionBtns && (
+    {props.showAdditionBtns && (
     <div>
       <Button color="red" onClick={props.onShortageClicked}>Shortage</Button>
     </div>
     )}
-
   </div>
 );
 

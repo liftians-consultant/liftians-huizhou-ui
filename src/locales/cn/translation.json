@@ -7,7 +7,7 @@
   "message.somethingWentWrong": "发生错误",
   "message.cannotBeEmpty": "无法为空白",
   "message.connectionTimeout": "登入超时：请确认您设定正确的伺服器终端", 
-  "placeholder.username": "请输入帐号",
+  "placeholder.cardNumber": "请掃描編碼",
   "placeholder.password": "请输入密码",
   "//": "Server Setting Modal",
   "title.stationConfigSetting": "操作台 / 伺服器终端设置",

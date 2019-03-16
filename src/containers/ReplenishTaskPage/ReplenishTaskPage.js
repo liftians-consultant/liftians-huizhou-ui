@@ -45,6 +45,7 @@ class ReplenishTaskPage extends Component {
     inputLoading: false,
     tableLoading: false,
     pages: 1,
+    orderCount: 0,
   };
 
   NewOrderTableColumn = [
@@ -111,6 +112,7 @@ class ReplenishTaskPage extends Component {
 
     this.props.getTaskStatus().then(() => {
       this.getStationOrderList([1], 1);
+      this.checkTaskCount();
       this.loaded = true;
     });
   }
@@ -120,6 +122,7 @@ class ReplenishTaskPage extends Component {
   }
 
   focusInput() {
+    this.scanRef.current.inputRef.value = '';
     this.scanRef.current.focus();
   }
 
@@ -165,14 +168,24 @@ class ReplenishTaskPage extends Component {
   }
 
   preProcessInputValue(value) {
-    if (value === 'START') {
-      if (this.state.ordersList.length === 0) {
-        toast.info(this.props.t('message.error.noNewOrder'));
-      } else {
-        this.handleStartBtn();
-      }
+    if (value === '%%START_OPERATION%%') {
+      this.handleStartBtn();
       return true;
     }
+
+    if (value === '%%REFRESH_LIST%%') {
+      this.getStationOrderList([1], 1, () => this.addUnbindOrder());
+      this.focusInput();
+      return true;
+    }
+
+    // if (value === '%%RETREIVE_WATCH_ORDER%%') {
+    //   api.station.retreiveWatchOrder().then(() => {
+    //     this.getStationOrderList([1], 1, () => this.addUnbindOrder());
+    //   });
+    //   this.focusInput();
+    //   return true;
+    // }
 
     return false;
   }
@@ -206,15 +219,16 @@ class ReplenishTaskPage extends Component {
       });
 
       api.replenish.retreiveReceiveFromAsm(e.target.value).then((res) => {
+        this.focusInput();
         this.setState({ inputLoading: false });
         if (res.success) {
-          this.getStationOrderList([1], 1);
-
-          this.scanRef.current.inputRef.value = '';
-          this.scanRef.current.focus();
+          this.getStationOrderList([1], 1, () => {
+            this.checkTaskCount();
+          });
         }
       }).catch(() => {
         toast.error(this.props.t('message.error.retreiveOrderFromAsm'));
+        this.focusInput();
         this.setState({ inputLoading: false });
       });
     }
@@ -240,6 +254,18 @@ class ReplenishTaskPage extends Component {
     });
   }
 
+  checkTaskCount() {
+    const { stationId } = this.props;
+
+    api.replenish.getStationReplenishList(stationId, [1, 2, 3, 4], 1, this.pageSize).then((res) => {
+      if (res.success) {
+        this.setState({ orderCount: res.data.list.length });
+        console.log('orderCount', res.data.list.length);
+      }
+    }).catch(() => {
+    });
+  }
+
   setStationTaskType() {
     this.props.setStationTaskType('R');
   }
@@ -259,7 +285,9 @@ class ReplenishTaskPage extends Component {
   handleTaskChange = (e, { value }) => {
     this.setState({ activeTaskType: value }, () => {
       if (value === '0') {
-        this.getStationOrderList([1], 1);
+        this.getStationOrderList([1], 1, () => {
+          this.checkTaskCount();
+        });
       } else if (value === '1') {
         this.getStationOrderList([2, 3, 4], 1);
       } else if (value === '5') {
@@ -272,17 +300,28 @@ class ReplenishTaskPage extends Component {
 
   handleStartBtn = () => {
     this.log.info('[HANDLE START BTN] Btn clicked');
-    // const barcodeList = this.state.newOrdersList.map(obj => obj.id);
-    const barcodeList = this.state.ordersList.map(obj => obj.id);
-    api.replenish.startReceiveTask(barcodeList).then((res) => {
-      if (res.success) {
-        if (res.data.success === 0) {
-          toast.error(this.props.t('message.error.cannotStartOperation'));
-          return;
+
+    this.setState({ tableLoading: true });
+    this.focusInput();
+    if (this.state.ordersList.length > 0) {
+      // const barcodeList = this.state.newOrdersList.map(obj => obj.id);
+      const barcodeList = this.state.ordersList.map(obj => obj.id);
+      api.replenish.startReceiveTask(barcodeList).then((res) => {
+        if (res.success) {
+          if (res.data.success === 0) {
+            toast.error(this.props.t('message.error.cannotStartOperation'));
+            this.setState({ tableLoading: false });
+            return;
+          }
+          this.props.history.push('/replenish-operation');
         }
-        this.props.history.push('/replenish-operation');
-      }
-    });
+      });
+    } else if (this.state.orderCount > 0) {
+      this.props.history.push('/replenish-operation');
+    } else {
+      toast.info(this.props.t('message.error.noNewOrder'));
+      this.setState({ tableLoading: false });
+    }
   }
 
   handleContinueBtn = () => {
@@ -308,7 +347,7 @@ class ReplenishTaskPage extends Component {
   render() {
     const {
       tableLoading, ordersList, inputLoading, pages, activeTaskType,
-      cancelErrorMessage,
+      cancelErrorMessage, orderCount,
     } = this.state;
     const { t, openRemoveModal } = this.props;
 
@@ -368,7 +407,7 @@ class ReplenishTaskPage extends Component {
                     size="huge"
                     primary
                     onClick={() => this.handleStartBtn()}
-                    disabled={ordersList.length === 0}
+                    disabled={orderCount === 0 || tableLoading === true}
                   >
                     {t('label.start')}
                   </Button>
@@ -377,7 +416,7 @@ class ReplenishTaskPage extends Component {
                   <Button
                     size="huge"
                     onClick={() => this.handleContinueBtn()}
-                    disabled={ordersList.length === 0}
+                    disabled={orderCount === 0 || tableLoading === true}
                   >
                     {t('label.continue')}
                   </Button>

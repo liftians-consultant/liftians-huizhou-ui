@@ -205,7 +205,7 @@ class ReplenishOperationPage extends Component {
   }
 
   preProcessInputValue(value) {
-    if (value === 'change') {
+    if (value === '%%CHANGE_BIN%%') {
       this.setState(prevState => ({ isChangeLocation: !prevState.isChangeLocation }));
       return true;
     }
@@ -226,12 +226,16 @@ class ReplenishOperationPage extends Component {
       }
 
       let scanType;
-      const { taskStatus, stationTaskStat } = this.state;
+      const { taskStatus } = this.state;
       let { isChangeLocation } = this.state;
 
-      if (scannedValue === 'empty' && stationTaskStat !== 26) {
+      if (scannedValue === '%%EMPTY_LOCATION%%') {
+        // if (stationTaskStat !== 26) {
         isChangeLocation = true;
         scannedValue = null;
+        // } else {
+        // return;
+        // }
       }
 
       if (isChangeLocation) {
@@ -299,7 +303,7 @@ class ReplenishOperationPage extends Component {
     this.handleScanKeyPress({
       key: 'Enter',
       target: {
-        value: 'change',
+        value: '%%CHANGE_BIN%%',
       },
       persist: () => {},
     });
@@ -309,7 +313,7 @@ class ReplenishOperationPage extends Component {
     this.handleScanKeyPress({
       key: 'Enter',
       target: {
-        value: 'empty',
+        value: '%%EMPTY_LOCATION%%',
       },
       persist: () => {},
     });

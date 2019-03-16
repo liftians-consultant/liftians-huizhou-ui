@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Grid, Image, Segment } from 'semantic-ui-react';
 
-import LoginForm from 'components/forms/LoginForm';
 import ServerSettingModal from 'components/common/ServerSettingModal/ServerSettingModal';
 import { login } from 'redux/actions/authAction';
 import { activateStation } from 'redux/actions/stationAction';
 
 import logo from 'assets/images/asm_logo.png';
+import CardLoginForm from '../components/forms/CardLoginForm';
 
 const style = {
   position: 'absolute',
@@ -61,7 +61,7 @@ class LoginPage extends Component {
           <Grid.Column style={{ maxWidth: 450 }}>
             <Image src={logo} size="medium" centered />
             <Segment>
-              <LoginForm
+              <CardLoginForm
                 submit={this.submit}
                 afterSubmit={this.handleAfterSubmit}
               />

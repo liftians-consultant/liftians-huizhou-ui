@@ -20,6 +20,22 @@ import { clearAllInterval } from 'utils/utils';
 import './PickTaskPage.css';
 import * as log4js from 'log4js2';
 
+
+const retreiveWatchOrder = () => new Promise((resolve) => {
+  api.pick.retreiveWatchOrder().then((res) => {
+    if (res.success) {
+      console.log(res.data);
+      if (res.data === 0) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    } else {
+      resolve(false);
+    }
+  });
+});
+
 class PickTaskPage extends Component {
   log = log4js.getLogger('PickTaskPage');
 
@@ -29,7 +45,7 @@ class PickTaskPage extends Component {
 
   deleteIndex = 0;
 
-  orderLimit = 10;
+  orderLimit = 5;
 
   taskTypeOption = [
     { key: 1, tranlationKey: 'label.unprocessed', index: 1, value: '0' },
@@ -50,6 +66,7 @@ class PickTaskPage extends Component {
     cancelErrorMessage: '',
     isLimit: false,
     unbindedOrderList: [],
+    orderCount: 0,
   }
 
   NewOrderTableColumn = [
@@ -187,12 +204,46 @@ class PickTaskPage extends Component {
   }
 
   preProcessInputValue(value) {
-    if (value === 'START') {
+    if (value === '%%START_OPERATION%%') {
       this.handleStartBtn();
       return true;
     }
 
+    if (value === '%%REFRESH_LIST%%') {
+      this.getStationOrderList([1], 1, () => this.addUnbindOrder());
+      this.focusInput();
+      return true;
+    }
+
+    if (value === 'watch') {
+      const remainOrderCount = this.orderLimit - this.state.orderCount;
+      if (remainOrderCount > 0) {
+        this.retreiveWatchOrderRecursive(remainOrderCount);
+      }
+      this.focusInput();
+      return true;
+    }
+
     return false;
+  }
+
+  async retreiveWatchOrderRecursive(totalCallCount) {
+    this.setState({ inputLoading: true });
+    for (let i = 0; i < totalCallCount; i++) {
+      /* eslint-disable-next-line no-await-in-loop */
+      const result = await retreiveWatchOrder();
+      if (result === false) {
+        break;
+      }
+      console.log(result);
+    }
+
+    // give database time to process
+    setTimeout(() => {
+      this.getStationOrderList([1], 1, () => this.addUnbindOrder());
+      this.checkTaskCountOverflow();
+      this.setState({ inputLoading: false });
+    }, 1000);
   }
 
   handleFetchTableData(state) {
@@ -201,7 +252,10 @@ class PickTaskPage extends Component {
     const { activeTaskType } = this.state;
     const newPage = state.page + 1; // index start from 0.
     if (activeTaskType === '0') {
-      this.getStationOrderList([1], newPage, () => this.addUnbindOrder());
+      this.getStationOrderList([1], newPage, () => {
+        this.addUnbindOrder();
+        this.checkTaskCountOverflow();
+      });
     } else if (activeTaskType === '1') {
       this.getStationOrderList([2, 3, 4], newPage);
     } else if (activeTaskType === '5') {
@@ -279,10 +333,11 @@ class PickTaskPage extends Component {
     api.pick.getStationOrderList(stationId, [1, 2, 3, 4], 1, this.pageSize).then((res) => {
       if (res.success) {
         if (res.data.list.length >= this.orderLimit) {
-          this.setState({ isLimit: true });
+          this.setState({ isLimit: true, orderCount: res.data.list.length });
         } else {
-          this.setState({ isLimit: false });
+          this.setState({ isLimit: false, orderCount: res.data.list.length });
         }
+        console.log('orderCount', res.data.list.length);
       }
     }).catch(() => {
     });
@@ -326,7 +381,10 @@ class PickTaskPage extends Component {
   handleTaskChange = (e, { value }) => {
     this.setState({ activeTaskType: value }, () => {
       if (value === '0') {
-        this.getStationOrderList([1], 1, () => this.addUnbindOrder());
+        this.getStationOrderList([1], 1, () => {
+          this.addUnbindOrder();
+          this.checkTaskCountOverflow();
+        });
       } else if (value === '1') {
         this.getStationOrderList([2, 3, 4], 1);
       } else if (value === '5') {
@@ -339,16 +397,27 @@ class PickTaskPage extends Component {
 
   handleStartBtn = () => {
     this.log.info('[HANDLE START BTN] Btn clicked');
-    const barcodeList = this.state.ordersList.map(obj => obj.id);
-    api.pick.startPickTask(barcodeList).then((res) => {
-      if (res.success) {
-        if (res.data.success === 0) {
-          toast.error(this.props.t('message.error.cannotStartOperation'));
-          return;
+
+    this.setState({ tableLoading: true });
+    this.focusInput();
+    if (this.state.ordersList.length > 0) {
+      const barcodeList = this.state.ordersList.map(obj => obj.id);
+      api.pick.startPickTask(barcodeList).then((res) => {
+        if (res.success) {
+          if (res.data.success === 0) {
+            toast.error(this.props.t('message.error.cannotStartOperation'));
+            this.setState({ tableLoading: false });
+            return;
+          }
+          this.props.history.push('/operation');
         }
-        this.props.history.push('/operation');
-      }
-    });
+      });
+    } else if (this.state.orderCount > 0) {
+      this.props.history.push('/operation');
+    } else {
+      toast.info(this.props.t('message.error.noNewOrder'));
+      this.setState({ tableLoading: false });
+    }
   }
 
   handleContinueBtn = () => {
@@ -392,7 +461,7 @@ class PickTaskPage extends Component {
   render() {
     const {
       tableLoading, ordersList, inputLoading, pages, activeTaskType,
-      binScanErrorMessage, cancelErrorMessage, isLimit, unbindedOrderList,
+      binScanErrorMessage, cancelErrorMessage, isLimit, unbindedOrderList, orderCount,
     } = this.state;
     const { t, openRemoveModal } = this.props;
 
@@ -454,7 +523,7 @@ class PickTaskPage extends Component {
                     size="huge"
                     primary
                     onClick={() => this.handleStartBtn()}
-                    disabled={ordersList.length === 0}
+                    disabled={orderCount === 0 || tableLoading === true}
                   >
                     {t('label.start')}
                   </Button>
@@ -463,7 +532,7 @@ class PickTaskPage extends Component {
                   <Button
                     size="huge"
                     onClick={() => this.handleContinueBtn()}
-                    disabled={ordersList.length === 0}
+                    disabled={orderCount === 0 || tableLoading === true}
                   >
                     {t('label.continue')}
                   </Button>

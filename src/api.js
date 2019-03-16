@@ -9,12 +9,25 @@ const uuidv4 = require('uuid/v4');
  * All API call.
  */
 
+// Login Method: Username and password
+// function loginRequest(credentials) {
+//   return axios.post(`${appConfig.getApiUrl()}/wms/api`, {
+//     messageType: 'LOGIN',
+//     data: {
+//       username: credentials.username,
+//       password: credentials.password,
+//     },
+//     msgId: uuidv4(),
+//     token: apiKey.loginToken,
+//   }, { timeout: 6000 });
+// }
+
+// Login Method: scancard
 function loginRequest(credentials) {
   return axios.post(`${appConfig.getApiUrl()}/wms/api`, {
-    messageType: 'LOGIN',
+    messageType: 'LOGIN_CARD',
     data: {
-      username: credentials.username,
-      password: credentials.password,
+      card: credentials,
     },
     msgId: uuidv4(),
     token: apiKey.loginToken,
@@ -108,6 +121,9 @@ const pick = {
   }).then(res => parseResult(res)),
 
   cancelDeliveryOrder: orderId => wmsRequest('CANCEL_DELIVERY_ORDER', orderId)
+    .then(res => parseResult(res)),
+
+  retreiveWatchOrder: () => wmsRequest('GET_WATCH_DELIVERY')
     .then(res => parseResult(res)),
 };
 
