@@ -72,6 +72,9 @@ class ReplenishTaskPage extends Component {
       key: 'label.manufacturer',
       accessor: 'manufacturerName',
     }, {
+      key: 'label.store',
+      accessor: 'store',
+    }, {
       key: 'label.status',
       accessor: 'statusName',
     }, {

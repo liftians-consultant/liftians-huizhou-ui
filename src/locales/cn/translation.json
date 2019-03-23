@@ -40,6 +40,7 @@
   "label.unit": "单位",
   "label.batch": "批量号",
   "label.manufacturer": "制造商",
+  "label.store": "倉號",
   "label.status": "状态",
   "label.remove": "删除",
   "label.type": "工單類型",
