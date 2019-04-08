@@ -1,6 +1,6 @@
 {
   "name": "liftians-huizhou-ui",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": "Kevin Hong",
   "private": true,
   "dependencies": {
@@ -65,9 +65,10 @@
     "start-js": "cross-env NODE_PATH=src react-scripts start",
     "build-js": "cross-env NODE_PATH=src react-scripts build",
     "build": "npm-run-all build-css build-js",
+    "build-web": "yarn build && cp package.server.json build/package.json && cp server.js build/server.js",
     "test": "cross-env NODE_PATH=src react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "electron-pack": "electron-builder -m -c.extraMetadata.main=build/electron.js",
+    "electron-pack": "electron-builder -mw -c.extraMetadata.main=build/electron.js",
     "preelectron-pack": "yarn build",
     "precommit": "lint-staged"
   },
@@ -84,10 +85,13 @@
   "homepage": "./",
   "build": {
     "appId": "com.liftians.workstation",
+    "productName": "ASM Workstation",
+    "copyright": "Copyright © 2019 Liftians",
     "files": [
       "build/**/*",
       "node_modules/**/*",
-      "package.json"
+      "package.json",
+      "icon.*"
     ],
     "directories": {
       "buildResources": "public"

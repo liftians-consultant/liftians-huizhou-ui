@@ -1,0 +1,14 @@
+{
+  "name": "liftians-ui-server",
+  "version": "1.0.0",
+  "author": "Kevin Hong",
+  "private": true,
+  "dependencies": {
+    "express": "^4.16.4",
+    "pm2": "^3.4.1"
+  },
+  "scripts": {
+    "start": "pm2 start server.js",
+    "stop": "pm2 stop server && pm2 delete server"
+  }
+}

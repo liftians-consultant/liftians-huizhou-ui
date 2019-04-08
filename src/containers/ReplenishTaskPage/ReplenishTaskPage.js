@@ -26,7 +26,7 @@ class ReplenishTaskPage extends Component {
 
   locale = process.env.REACT_APP_LOCALE;
 
-  pageSize = 10;
+  pageSize = 5;
 
   deleteIndex = 0;
 

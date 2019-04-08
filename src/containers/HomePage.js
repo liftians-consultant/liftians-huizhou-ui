@@ -68,6 +68,10 @@ class HomePage extends Component {
     this.props.history.push(name);
   }
 
+  goToNowhere = () => {
+    // DO NOTHING~~~
+  }
+
   checkCurrentUnFinishTaskCall() {
     this.props.checkCurrentUnFinishTask(this.props.stationId).then((res) => {
       console.log('currentUnfinishedTask', res);
@@ -94,19 +98,19 @@ class HomePage extends Component {
               <MenuButton title={t('title.pick')} name="pick-task" iconName="sign out" clickHandler={this.goToPage} isDisabled={!!(stationTaskType !== 'U' && stationTaskType !== 'P')} />
             </Grid.Column>
             <Grid.Column>
-              <MenuButton title={t('title.inventoryCheck')} name="" iconName="exchange" clickHandler={this.goToPage} isDisabled={!!(stationTaskType !== 'U' && stationTaskType !== 'C')} />
+              <MenuButton title={t('title.inventoryCheck')} name="" iconName="exchange" clickHandler={this.goToNowhere} isDisabled={!!(stationTaskType !== 'U' && stationTaskType !== 'C')} />
             </Grid.Column>
           </Grid.Row>
 
           <Grid.Row>
             <Grid.Column>
-              <MenuButton title={t('title.systemSetting')} name="system-setting" iconName="settings" clickHandler={this.goToPage} />
+              <MenuButton title={t('title.systemSetting')} name="system-setting" iconName="settings" clickHandler={this.goToNowhere} />
             </Grid.Column>
             <Grid.Column>
-              <MenuButton title={t('title.inventorySearch')} name="inventory-search" iconName="search" clickHandler={this.goToPage} />
+              <MenuButton title={t('title.inventorySearch')} name="inventory-search" iconName="search" clickHandler={this.goToNowhere} />
             </Grid.Column>
             <Grid.Column>
-              <MenuButton title={t('title.generateData')} name="generate-data" iconName="list alternate outline" clickHandler={this.goToPage} />
+              <MenuButton title={t('title.generateData')} name="generate-data" iconName="list alternate outline" clickHandler={this.goToNowhere} />
             </Grid.Column>
           </Grid.Row>
         </Grid>

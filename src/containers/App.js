@@ -57,7 +57,7 @@ const App = () => (
       <UserRoute path="/generate-delivery" exact component={GenerateDeliveryPage} />
       <UserRoute path="/generate-replenishment" exact component={GenerateReplenishmentPage} />
       <UserRoute path="/language" exact component={ChangeLanguagePage} />
-      <GuestRoute path="/login" component={LoginPage} />
+      <GuestRoute path="/login" exact component={LoginPage} />
       <UserRoute path="/" exact component={HomePage} />
     </Switch>
   </div>
