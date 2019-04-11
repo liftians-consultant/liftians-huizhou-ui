@@ -93,9 +93,6 @@ class PickTaskPage extends Component {
       key: 'label.manufacturer',
       accessor: 'manufacturerName',
     }, {
-      key: 'label.manufacturer',
-      accessor: 'manufacturerName',
-    }, {
       key: 'label.store',
       accessor: 'store',
     }, {

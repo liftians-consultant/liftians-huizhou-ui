@@ -43,6 +43,11 @@ If you want to use the data generate feature. Create a `apiKey.json` file under 
 }
 ```
 
+## Proxy
+In dev environment, remember to change proxy setting in `setupProxy.js`. While logging in use `http://localhost` for url and `3000` for port.
+
+You don't need to worry about proxy after build.
+
 ## Starting Dev server:
 Both web and desktop build are using the same code base. 
 
